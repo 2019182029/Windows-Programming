@@ -44,9 +44,9 @@ public:
 		Platform[3].x = 800;
 		Platform[3].y = 450;
 		attack.emplace_back(500, 500, 1, 0, 0);
-		for (int i = 0; i < 32; i++) {
+		/*for (int i = 0; i < 32; i++) {
 			attack.emplace_back()
-		}
+		}*/
 	}
 	// 보스 회전 공격
 	void windmill() {
