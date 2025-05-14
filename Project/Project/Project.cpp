@@ -113,13 +113,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		BitBlt(hDC, 0, 0, rt.right, rt.bottom, mainDC, 0, 0, SRCCOPY);
 
 		SelectObject(hDC, old_Brush); // 브러시 초기화
-		// 각 DC 정보 초기화
-		SelectObject(hDC, old_hBitmap);
-		SelectObject(hDC, old_Pic_BossMap);
-		SelectObject(hDC, old_Pic_Boss_B);
-		SelectObject(hDC, old_Pic_Boss_C);
-		SelectObject(hDC, old_Pic_Platform);
-		SelectObject(hDC, old_Pic_Player);
 		EndPaint(hWnd, &ps);
 		break;
 	}
@@ -164,6 +157,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	case WM_DESTROY: {
+		// 각 DC 정보 초기화
+		SelectObject(mainDC, old_hBitmap);
+		SelectObject(MapDC, old_Pic_BossMap);
+		SelectObject(Boss_B_DC, old_Pic_Boss_B);
+		SelectObject(Boss_C_DC, old_Pic_Boss_C);
+		SelectObject(PlatformDC, old_Pic_Platform);
+		SelectObject(PlayerDC, old_Pic_Player);
 		DeleteObject(red_Brush);
 		DeleteObject(lightgray_Brush);
 		// 생성한 DC 및 비트맵 삭제
