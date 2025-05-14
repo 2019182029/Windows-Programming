@@ -10,11 +10,13 @@
 #include<math.h>
 #include<cmath>
 #include<vector>
+
 #pragma comment(lib, "msimg32.lib")
 
 HINSTANCE g_hinst; // 일단 보류 (현재 실행 중인 애플리케이션의 인스턴스 핸들을 담기 위한 g_hinst 변수
 
 std::default_random_engine dre; // 랜덤 엔진
+
 
 
 HDC mainDC; // 모든 비트맵을 mainDC에 복사한 뒤, 이를 한꺼번에 hDC로 옮겨서 더블 버퍼링 구현
