@@ -5,13 +5,15 @@
 #define B_remove_attack 41
 #define B_shoot_attack 42
 #define B_attacked 43
+#define B_animation 44
 
 HDC Boss_B_DC;
-HBITMAP Pic_Boss_B_row, Pic_Boss_B_col;
+HBITMAP Pic_Boss_B_row[7], Pic_Boss_B_col[7];
 // 이전 비트맵 정보 저장 (안전한 제거 용도)
 HBITMAP old_Pic_Boss_B;
 
 int stage4_onoff = 0; // 타이머 중복 방지 변수
+int Boss_B_ani = 0; // 애니메이션 변경 변수
 
 // 충돌 체크할 것 (1: 보스의 공격(Attack 클래스에 있는 a_x, a_y 중심점을 이용), 2: 주인공 캐릭터가 발판 위에 설 수 있도록 Platform[4] 배열의 좌표 참고
 // 한 사이클의 공격이 끝나고 2~3초 멈추려고 했으나, 생각보다 난이도가 너무 쉽고 게임이 루즈해져서 그냥 연속적으로 자리를 바꿔나가며 공격을 지속하도록 만듦 (교수님께 이런 세부 사항 변경 가능한지 여쭤보기)
@@ -194,11 +196,11 @@ public:
 		// 보스 출력
 		b_pos();
 		if (b_direct() == 1 or b_direct() == 2) {
-			SelectObject(Boss_B_DC, Pic_Boss_B_row);
+			SelectObject(Boss_B_DC, Pic_Boss_B_row[Boss_B_ani]);
 			TransparentBlt(mainDC, b_x(), b_y(), 1000, 100, Boss_B_DC, 0, 0, 600, 100, RGB(255, 255, 255));
 		}
 		else {
-			SelectObject(Boss_B_DC, Pic_Boss_B_col);
+			SelectObject(Boss_B_DC, Pic_Boss_B_col[Boss_B_ani]);
 			TransparentBlt(mainDC, b_x(), b_y(), 100, 800, Boss_B_DC, 0, 0, 100, 600, RGB(255, 255, 255));
 			//StretchBlt(mainDC, b_x(), b_y(), 100, 800, Boss_B_DC, 0, 0, 100, 600, print_type); 배경색 있어도 되는 경우
 		}
