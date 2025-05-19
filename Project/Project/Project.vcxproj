@@ -19,12 +19,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Common.cpp" />
+    <ClCompile Include="CPlayer.cpp" />
     <ClCompile Include="Project.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Boss B.h" />
     <ClInclude Include="Boss C.h" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="CPlayer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

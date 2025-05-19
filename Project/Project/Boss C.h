@@ -14,6 +14,7 @@ int stage6_onoff = 0;
 int Boss_C_ani = 0; // 애니메이션 변경 변수
 
 class Boss_C {
+public:
 	int x, y; // 보스 위치
 	int direct; // 1: 우측 상단, 2: 좌측 상단, 3: 좌측 하단, 4: 우측 하단
 	int hp;

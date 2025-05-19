@@ -1,8 +1,11 @@
 #include "Common.h"
 #include "Boss B.h"
 #include "Boss C.h"
+#include "CPlayer.h"
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
+
+bool player_platform_collision(const Player& player, const POINT& platform);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevinstance, LPSTR lpszCmdParam, int nCmdShow) { // WinMain부분에 주석이 일치하지 않는다는 오류는 원래 잘 뜸. 무시해도 됨.
 	HWND hWnd;
@@ -43,34 +46,45 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevinstance, LPSTR lpszCmdPa
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	PAINTSTRUCT ps;
 	HDC hDC;
+	static Player player;
+	static bool key_pressed[256] = { false };
 
 	switch (iMessage) {
 	case WM_CREATE: {
 		hDC = GetDC(hWnd);
 		GetClientRect(hWnd, &rt);
+
 		// 브러시 생성
 		red_Brush = CreateSolidBrush(RGB(255, 0, 0));
 		blue_Brush = CreateSolidBrush(RGB(0, 0, 255));
 		lightgray_Brush = CreateSolidBrush(RGB(240, 240, 240));
+
 		// mainDC에 대한 비트맵 생성 및 설정
 		mainDC = CreateCompatibleDC(hDC);
 		hBitmap = CreateCompatibleBitmap(hDC, rt.right, rt.bottom);
 		old_hBitmap = (HBITMAP)SelectObject(mainDC, (HBITMAP)hBitmap);
 		SelectObject(mainDC, (HBITMAP)hBitmap);
+
 		// MapDc에 대한 비트맵 생성
 		MapDC = CreateCompatibleDC(hDC);
 		Pic_BossMap = (HBITMAP)LoadImage(g_hinst, _T("boss stage.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		Pic_RelaxMap = (HBITMAP)LoadImage(g_hinst, _T("relax stage.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_BossMap = (HBITMAP)SelectObject(MapDC, Pic_BossMap);
+
 		// PlayerDC에 대한 비트맵 생성 및 설정
 		PlayerDC = CreateCompatibleDC(hDC);
 		Pic_Player = (HBITMAP)LoadImage(g_hinst, _T("player.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Player = (HBITMAP)SelectObject(PlayerDC, Pic_Player);
 		SelectObject(PlayerDC, Pic_Player);
+		GetObject(Pic_Player, sizeof(BITMAP), &Bmp_Player);
+		SetTimer(hWnd, PLAYER_MOVE, 16, NULL);
+
 		// PlatformDC에 대한 비트맵 생성 및 설정
 		PlatformDC = CreateCompatibleDC(hDC);
 		Pic_Platform = (HBITMAP)LoadImage(g_hinst, _T("platform.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Platform = (HBITMAP)SelectObject(PlatformDC, Pic_Platform);
+		GetObject(Pic_Platform, sizeof(BITMAP), &Bmp_Platform);
+
 		// Boss_B_DC에 대한 비트맵 생성 및 설정
 		Boss_B_DC = CreateCompatibleDC(hDC);
 		Pic_Boss_B_row[0] = (HBITMAP)LoadImage(g_hinst, _T("boss B_row1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
@@ -88,6 +102,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		Pic_Boss_B_col[5] = (HBITMAP)LoadImage(g_hinst, _T("boss B_col6.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		Pic_Boss_B_col[6] = (HBITMAP)LoadImage(g_hinst, _T("boss B_col7.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Boss_B = (HBITMAP)SelectObject(Boss_B_DC, Pic_Boss_B_row[0]);
+
 		// Boss_C_DC에 대한 비트맵 생성 및 설정
 		Boss_C_DC = CreateCompatibleDC(hDC);
 		Pic_Boss_C[0] = (HBITMAP)LoadImage(g_hinst, _T("boss C1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
@@ -99,6 +114,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		ReleaseDC(hWnd, hDC);
 		break;
 	}
+
 	case WM_PAINT: {
 		hDC = BeginPaint(hWnd, &ps);
 		old_Brush = (HBRUSH)SelectObject(hDC, red_Brush); // 기본 브러시 저장
@@ -111,8 +127,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 			SelectObject(MapDC, Pic_RelaxMap);
 			StretchBlt(mainDC, 0, 700, rt.right, 300, MapDC, 0, 0, 1200, 300, SRCCOPY); // 맵 하단부에 폭은 맵 가로 최대치에 높이 300 범위에 출력
 		}
-		// 출력
-		StretchBlt(mainDC, 500, 500, 30, 30, PlayerDC, 0, 0, 30, 30, SRCCOPY);
+
+		// Player
+		TransparentBlt(mainDC, static_cast<int>(player.m_x), static_cast<int>(player.m_y), Bmp_Player.bmWidth, Bmp_Player.bmHeight,
+			PlayerDC, 0, 0, Bmp_Player.bmWidth, Bmp_Player.bmHeight, RGB(255, 255, 255));
+
 		// 스테이지 4에 대한 처리
 		if (stage == 4) {
 			B.print_stage4();
@@ -139,9 +158,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		EndPaint(hWnd, &ps);
 		break;
 	}
+
 	case WM_TIMER: {
+		// Player
+		if (wParam == PLAYER_MOVE) {
+			player.update();
+
+			switch (stage) {
+			case 4:
+				for (const auto& platform : B.Platform) {
+					if (player_platform_collision(player, platform)) {
+						player.set_on_platform(platform);
+					}
+				}
+				break;
+
+			case 6:
+				for (const auto& platform : C.Platform) {
+					if (player_platform_collision(player, platform)) {
+						player.set_on_platform(platform);
+					}
+				}
+				break;
+			}
+		}
+
 		// 보스 B 공격 생성 타이머
-		if (wParam == B_make_attack) {
+		else if (wParam == B_make_attack) {
 			std::uniform_int_distribution<int> ran_attack( 5, 7 );
 			B.attack_pattern();
 			B.count_attack(B.b_count() + 1);
@@ -197,6 +240,45 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		InvalidateRect(hWnd, NULL, FALSE);
 		break;
 	}
+
+	case WM_KEYDOWN: {
+		if (!key_pressed[wParam]) {
+			key_pressed[wParam] = true;
+
+			switch (wParam) {
+			case 'A':
+				player.set_velocity(-5.0f, 0);
+				break;
+
+			case 'D':
+				player.set_velocity(5.0f, 0);
+				break;
+
+			default:
+				break;
+			}
+		}
+		break;
+	}
+
+	case WM_KEYUP: {
+		key_pressed[wParam] = false;
+
+		switch (wParam) {
+		case 'A':
+			player.set_velocity(5.0f, 0);
+			break;
+
+		case 'D':
+			player.set_velocity(-5.0f, 0);
+			break;
+
+		default:
+			break;
+		}
+		break;
+	}
+
 	case WM_DESTROY: {
 		// 각 DC 정보 초기화
 		SelectObject(mainDC, old_hBitmap);
@@ -234,4 +316,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	}
 	}
 	return (DefWindowProc(hWnd, iMessage, wParam, lParam));
+}
+
+bool player_platform_collision(const Player& player, const POINT& platform){
+	int player_top = static_cast<int>(player.m_y);
+	int player_bottom = static_cast<int>(player.m_y) + Bmp_Player.bmHeight;
+	int player_left = static_cast<int>(player.m_x);
+	int player_right = static_cast<int>(player.m_x) + Bmp_Player.bmWidth;
+
+	int platform_top = platform.y;
+	int platform_bottom = platform.y + Bmp_Platform.bmHeight;
+	int platform_left = platform.x;
+	int platform_right = platform.x + Bmp_Platform.bmWidth;
+
+	if ((player_top < platform_bottom) &&
+		(player_bottom > platform_top) &&
+		(player_left < platform_right) &&
+		(player_right > platform_left)) {
+		return true;
+	}
+	return false;
 }
