@@ -5,7 +5,7 @@
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
-bool player_platform_collision(const Player& player, const POINT& platform);
+bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevinstance, LPSTR lpszCmdParam, int nCmdShow) { // WinMain부분에 주석이 일치하지 않는다는 오류는 원래 잘 뜸. 무시해도 됨.
 	HWND hWnd;
@@ -73,10 +73,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
 		// PlayerDC에 대한 비트맵 생성 및 설정
 		PlayerDC = CreateCompatibleDC(hDC);
-		Pic_Player = (HBITMAP)LoadImage(g_hinst, _T("player.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		old_Pic_Player = (HBITMAP)SelectObject(PlayerDC, Pic_Player);
-		SelectObject(PlayerDC, Pic_Player);
-		GetObject(Pic_Player, sizeof(BITMAP), &Bmp_Player);
+		Pic_Player[IDLE] = (HBITMAP)LoadImage(g_hinst, _T("player.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Player[UP] = (HBITMAP)LoadImage(g_hinst, _T("player_up.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Player[DOWN] = (HBITMAP)LoadImage(g_hinst, _T("player_down.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Player[LEFT] = (HBITMAP)LoadImage(g_hinst, _T("player_left.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Player[RIGHT] = (HBITMAP)LoadImage(g_hinst, _T("player_right.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Player[DODGE] = (HBITMAP)LoadImage(g_hinst, _T("player_dodge.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		old_Pic_Player = (HBITMAP)SelectObject(PlayerDC, Pic_Player[player.m_anim_index]);
+		for (int i = 0; i < 6; ++i) {
+			GetObject(Pic_Player[i], sizeof(BITMAP), &Bmp_Player[i]);
+		}
 		SetTimer(hWnd, PLAYER_MOVE, 16, NULL);
 
 		// PlatformDC에 대한 비트맵 생성 및 설정
@@ -129,8 +135,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		}
 
 		// Player
-		TransparentBlt(mainDC, static_cast<int>(player.m_x), static_cast<int>(player.m_y), Bmp_Player.bmWidth, Bmp_Player.bmHeight,
-			PlayerDC, 0, 0, Bmp_Player.bmWidth, Bmp_Player.bmHeight, RGB(255, 255, 255));
+		int anim_index = player.m_anim_index;
+		SelectObject(PlayerDC, Pic_Player[anim_index]);
+		TransparentBlt(mainDC, static_cast<int>(player.m_x), static_cast<int>(player.m_y), Bmp_Player[anim_index].bmWidth, Bmp_Player[anim_index].bmHeight,
+			PlayerDC, 0, 0, Bmp_Player[anim_index].bmWidth, Bmp_Player[anim_index].bmHeight, RGB(255, 255, 255));
 
 		// 스테이지 4에 대한 처리
 		if (stage == 4) {
@@ -162,12 +170,27 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	case WM_TIMER: {
 		// Player
 		if (wParam == PLAYER_MOVE) {
+			float old_player_bottom = player.m_y + Bmp_Player[player.m_anim_index].bmHeight;
+
 			player.update();
 
+			if (!player.m_is_rolling && player.m_was_rolling) {
+				if (key_pressed['A']) {
+					player.set_velocity(-5.0f, 0.0f);
+				}
+
+				if (key_pressed['D']) {
+					player.set_velocity(5.0f, 0.0f);
+				}
+
+				player.m_was_rolling = false;
+			}
+
+			player.m_on_platform = false;
 			switch (stage) {
 			case 4:
 				for (const auto& platform : B.Platform) {
-					if (player_platform_collision(player, platform)) {
+					if (player_platform_collision(player, platform, old_player_bottom)) {
 						player.set_on_platform(platform);
 					}
 				}
@@ -175,7 +198,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
 			case 6:
 				for (const auto& platform : C.Platform) {
-					if (player_platform_collision(player, platform)) {
+					if (player_platform_collision(player, platform, old_player_bottom)) {
 						player.set_on_platform(platform);
 					}
 				}
@@ -241,17 +264,44 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
+	case WM_CHAR: {
+		switch (wParam) {
+		case 'w':
+			player.m_anim_index = UP;
+			break;
+
+		case 's':
+			player.m_anim_index = DOWN;
+			break;
+
+		case 'j':
+			player.jump();
+			break;
+
+		case 'l':
+			player.roll();
+			break;
+		}
+		break;
+	}
+
 	case WM_KEYDOWN: {
 		if (!key_pressed[wParam]) {
 			key_pressed[wParam] = true;
 
+			if (player.m_is_rolling) {
+				break;
+			}
+
 			switch (wParam) {
 			case 'A':
 				player.set_velocity(-5.0f, 0);
+				player.m_anim_index = LEFT;
 				break;
 
 			case 'D':
 				player.set_velocity(5.0f, 0);
+				player.m_anim_index = RIGHT;
 				break;
 
 			default:
@@ -262,19 +312,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	}
 
 	case WM_KEYUP: {
-		key_pressed[wParam] = false;
+		if (key_pressed[wParam]) {
+			key_pressed[wParam] = false;
 
-		switch (wParam) {
-		case 'A':
-			player.set_velocity(5.0f, 0);
-			break;
+			if (player.m_is_rolling) {
+				break;
+			}
 
-		case 'D':
-			player.set_velocity(-5.0f, 0);
-			break;
+			switch (wParam) {
+			case 'A':
+				player.set_velocity(5.0f, 0);
+				break;
 
-		default:
-			break;
+			case 'D':
+				player.set_velocity(-5.0f, 0);
+				break;
+
+			default:
+				break;
+			}
 		}
 		break;
 	}
@@ -318,16 +374,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	return (DefWindowProc(hWnd, iMessage, wParam, lParam));
 }
 
-bool player_platform_collision(const Player& player, const POINT& platform){
+bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom) {
+	if (0.0f > player.m_y_velocity) {
+		return false;
+	}
+
 	int player_top = static_cast<int>(player.m_y);
-	int player_bottom = static_cast<int>(player.m_y) + Bmp_Player.bmHeight;
+	int player_bottom = static_cast<int>(player.m_y) + Bmp_Player[player.m_anim_index].bmHeight;
 	int player_left = static_cast<int>(player.m_x);
-	int player_right = static_cast<int>(player.m_x) + Bmp_Player.bmWidth;
+	int player_right = static_cast<int>(player.m_x) + Bmp_Player[player.m_anim_index].bmWidth;
 
 	int platform_top = platform.y;
 	int platform_bottom = platform.y + Bmp_Platform.bmHeight;
 	int platform_left = platform.x;
 	int platform_right = platform.x + Bmp_Platform.bmWidth;
+
+	if ((platform_top + 1.0f) < old_player_bottom) {
+		return false;
+	}
 
 	if ((player_top < platform_bottom) &&
 		(player_bottom > platform_top) &&
