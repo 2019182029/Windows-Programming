@@ -27,9 +27,9 @@ HBITMAP hBitmap, Pic_BossMap, Pic_RelaxMap, Pic_Player, Pic_Platform;
 // 이전 비트맵 정보 저장 (안전한 제거 용도)
 HBITMAP old_hBitmap, old_Pic_BossMap, old_Pic_Player, old_Pic_Platform;
 
-HBRUSH red_Brush, lightgray_Brush, old_Brush;
+HBRUSH red_Brush, blue_Brush, lightgray_Brush, old_Brush;
 
 RECT rt; // 윈도우 크기 저장용 RECT 구조체
 
 // 스테이지 구성 양상: 휴식 공간 -> 보스 A -> 휴식 공간 -> 보스 B -> 휴식 공간 -> 보스 C -> 보스 C 클리어하면 게임 승리 메시지 창과 함께 게임 종료
-int stage = 4; // 스테이지 구분 (홀수면 휴식 공간, 짝수면 보스맵) (1부터 시작하며, 다음 스테이지로 넘어갈 때마다 1씩 증가시킴) (구현하는 스테이지에 따라 수치 다르게 주고 작업)
+int stage = 6; // 스테이지 구분 (홀수면 휴식 공간, 짝수면 보스맵) (1부터 시작하며, 다음 스테이지로 넘어갈 때마다 1씩 증가시킴) (구현하는 스테이지에 따라 수치 다르게 주고 작업)
