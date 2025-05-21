@@ -2,10 +2,6 @@
 
 #include "Common.h"
 
-#define PLAYER_MOVE 0
-
-constexpr float MAX_GRAVITY = 9.8f;
-
 class Player {
 public:
 	float m_x, m_y;

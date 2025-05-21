@@ -2,12 +2,16 @@
 #include "Boss B.h"
 #include "Boss C.h"
 #include "CPlayer.h"
+#include "CItem.h"
 
 //#pragma comment(linker,"/entry:WinMainCRTStartup /subsystem:console")
+
+std::vector<Item> g_items;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom);
+bool item_platform_collision(const Item& item, const POINT& platform);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevinstance, LPSTR lpszCmdParam, int nCmdShow) { // WinMain부분에 주석이 일치하지 않는다는 오류는 원래 잘 뜸. 무시해도 됨.
 	HWND hWnd;
@@ -93,6 +97,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		old_Pic_Platform = (HBITMAP)SelectObject(PlatformDC, Pic_Platform);
 		GetObject(Pic_Platform, sizeof(BITMAP), &Bmp_Platform);
 
+		// WeaponDC에 대한 비트맵 생성 및 설정
+		WeaponDC = CreateCompatibleDC(hDC);
+		Pic_Weapon[PISTOL] = (HBITMAP)LoadImage(g_hinst, _T("pistol.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Weapon[SMG] = (HBITMAP)LoadImage(g_hinst, _T("smg.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Weapon[SHOTGUN] = (HBITMAP)LoadImage(g_hinst, _T("shotgun.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Weapon[SNIPER] = (HBITMAP)LoadImage(g_hinst, _T("sniper.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		for (int i = 0; i < 4; ++i) {
+			GetObject(Pic_Weapon[i], sizeof(BITMAP), &Bmp_Weapon[i]);
+		}
+		old_Pic_Weapon = (HBITMAP)SelectObject(WeaponDC, Pic_Weapon[0]);
+		SetTimer(hWnd, ITEM_SPAWN, 10000, NULL);
+		SetTimer(hWnd, ITEM_MOVE, 16, NULL);
+
 		// Boss_B_DC에 대한 비트맵 생성 및 설정
 		Boss_B_DC = CreateCompatibleDC(hDC);
 		Pic_Boss_B_row[0] = (HBITMAP)LoadImage(g_hinst, _T("boss B_row1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
@@ -141,6 +158,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		SelectObject(PlayerDC, Pic_Player[anim_index]);
 		TransparentBlt(mainDC, static_cast<int>(player.m_x), static_cast<int>(player.m_y), Bmp_Player[anim_index].bmWidth, Bmp_Player[anim_index].bmHeight,
 			PlayerDC, 0, 0, Bmp_Player[anim_index].bmWidth, Bmp_Player[anim_index].bmHeight, RGB(255, 255, 255));
+
+		// Item
+		for (const auto& item : g_items) {
+			item.print(mainDC, WeaponDC);
+		}
 
 		// 스테이지 4에 대한 처리
 		if (stage == 4) {
@@ -194,6 +216,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 				for (const auto& platform : B.Platform) {
 					if (player_platform_collision(player, platform, old_player_bottom)) {
 						player.set_on_platform(platform);
+						break;
 					}
 				}
 				break;
@@ -202,9 +225,44 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 				for (const auto& platform : C.Platform) {
 					if (player_platform_collision(player, platform, old_player_bottom)) {
 						player.set_on_platform(platform);
+						break;
 					}
 				}
 				break;
+			}
+		}
+
+		// Item
+		else if (wParam == ITEM_SPAWN) {
+			g_items.emplace_back(WEAPON);
+		}
+		else if (wParam == ITEM_MOVE) {
+			for (auto& item : g_items) {
+				if (item.m_is_falling) {
+					item.update();
+
+					switch (stage) {
+					case 4:
+						for (const auto& platform : B.Platform) {
+							if (item_platform_collision(item, platform)) {
+								item.m_y = platform.y - 50.0f;
+								item.m_is_falling = false;
+								break;
+							}
+						}
+						break;
+
+					case 6:
+						for (const auto& platform : C.Platform) {
+							if (item_platform_collision(item, platform)) {
+								item.m_y = platform.y - 50.0f;
+								item.m_is_falling = false;
+								break;
+							}
+						}
+						break;
+					}
+				}
 			}
 		}
 
@@ -345,6 +403,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		SelectObject(Boss_C_DC, old_Pic_Boss_C);
 		SelectObject(PlatformDC, old_Pic_Platform);
 		SelectObject(PlayerDC, old_Pic_Player);
+		SelectObject(WeaponDC, old_Pic_Weapon);
 		// 브러시 초기화
 		SelectObject(mainDC, old_Brush);
 		DeleteObject(red_Brush);
@@ -359,9 +418,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		DeleteObject(hBitmap);
 		DeleteObject(Pic_BossMap);
 		DeleteObject(Pic_RelaxMap);
-		DeleteObject(Pic_Player);
+		for (int i = 0; i < 6; ++i) {
+			DeleteObject(Pic_Player[i]);
+		}
 		DeleteObject(Pic_Platform);
-		DeleteObject(Pic_Platform);
+		for (int i = 0; i < 4; ++i) {
+			DeleteObject(Pic_Weapon[i]);
+		}
 		for (int i = 0; i < 7; i++) {
 			DeleteObject(Pic_Boss_B_row[i]);
 			DeleteObject(Pic_Boss_B_col[i]);
@@ -399,6 +462,26 @@ bool player_platform_collision(const Player& player, const POINT& platform, floa
 		(player_bottom > platform_top) &&
 		(player_left < platform_right) &&
 		(player_right > platform_left)) {
+		return true;
+	}
+	return false;
+}
+
+bool item_platform_collision(const Item& item, const POINT& platform) {
+	float item_top = item.m_y;
+	float item_bottom = item.m_y + 50.0f;
+	float item_left = item.m_x;
+	float item_right = item.m_x + 50.0f;
+
+	int platform_top = platform.y;
+	int platform_bottom = platform.y + Bmp_Platform.bmHeight;
+	int platform_left = platform.x;
+	int platform_right = platform.x + Bmp_Platform.bmWidth;
+
+	if ((item_top < platform_bottom) &&
+		(item_bottom > platform_top) &&
+		(item_left < platform_right) &&
+		(item_right > platform_left)) {
 		return true;
 	}
 	return false;
