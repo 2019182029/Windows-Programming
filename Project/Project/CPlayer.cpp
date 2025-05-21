@@ -1,7 +1,7 @@
 #include "CPlayer.h"
 
 Player::Player() {
-	m_x = 0.0f; m_y = 0.0f;
+	m_x = 250.0f; m_y = 0.0f;
 	m_x_velocity = 0.0f; m_y_velocity = 0.0f;
 
 	m_anim_state = IDLE;
@@ -11,6 +11,8 @@ Player::Player() {
 
 	m_is_rolling = false;
 	m_was_rolling = false;
+
+	m_weapon = new Weapon(PISTOL);
 }
 
 void Player::set_velocity(float x_velocity, float y_velocity) {
@@ -64,6 +66,15 @@ void Player::roll() {
 	}
 }
 
+void Player::fire() {
+	if (m_weapon) {
+		m_weapon->fire(
+			m_x + (Bmp_Player[m_anim_state].bmWidth / 2) - 5,
+			m_y + (Bmp_Player[m_anim_state].bmHeight / 2) - 7,
+			m_anim_state);
+	}
+}
+
 void Player::update() {
 	// Roll
 	if (m_is_rolling) {
@@ -85,4 +96,20 @@ void Player::update() {
 	m_y_velocity = min(MAX_GRAVITY, m_y_velocity + 0.5f);
 
 	move();
+
+	// Weapon
+	if (m_weapon) {
+		m_weapon->update();
+	}
+}
+
+void Player::print(HDC hDC, HDC pDC, HDC bDC) const {
+	SelectObject(pDC, Pic_Player[m_anim_state]);
+	TransparentBlt(hDC, static_cast<int>(m_x), static_cast<int>(m_y), Bmp_Player[m_anim_state].bmWidth, Bmp_Player[m_anim_state].bmHeight,
+		pDC, 0, 0, Bmp_Player[m_anim_state].bmWidth, Bmp_Player[m_anim_state].bmHeight, RGB(255, 255, 255));
+
+	// Weapon
+	if (m_weapon) {
+		m_weapon->print(hDC, bDC);
+	}
 }

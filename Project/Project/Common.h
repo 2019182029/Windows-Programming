@@ -51,10 +51,11 @@ extern HDC MapDC;  // 맵 관련 DC로, 보스맵과 휴식 공간을 다룸
 extern HDC PlayerDC;  // 플레이어 캐릭터 관련 DC로, 기본 상태와 구르기 상태를 다룸
 extern HDC PlatformDC;  // 발판 DC
 extern HDC WeaponDC;  // 무기 DC
-extern HBITMAP hBitmap, Pic_BossMap, Pic_RelaxMap, Pic_Player[6], Pic_Platform, Pic_Weapon[4];
-extern BITMAP Bmp_Player[6], Bmp_Platform, Bmp_Weapon[4];
+extern HDC BulletDC;  // 총알 DC
+extern HBITMAP hBitmap, Pic_BossMap, Pic_RelaxMap, Pic_Player[6], Pic_Platform, Pic_Weapon[4], Pic_Bullet;
+extern BITMAP Bmp_Player[6], Bmp_Platform, Bmp_Weapon[4], Bmp_Bullet;
 
-extern HBITMAP old_hBitmap, old_Pic_BossMap, old_Pic_Player, old_Pic_Platform, old_Pic_Weapon;  // 이전 비트맵 정보 저장 (안전한 제거 용도)
+extern HBITMAP old_hBitmap, old_Pic_BossMap, old_Pic_Player, old_Pic_Platform, old_Pic_Weapon, old_Pic_Bullet;  // 이전 비트맵 정보 저장 (안전한 제거 용도)
 
 extern HBRUSH red_Brush, blue_Brush, lightgray_Brush, old_Brush;
 

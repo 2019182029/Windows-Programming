@@ -118,6 +118,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		}
 		old_Pic_Weapon = (HBITMAP)SelectObject(WeaponDC, Pic_Weapon[0]);
 
+		// BulletDC에 대한 비트맵 생성 및 설정
+		BulletDC = CreateCompatibleDC(hDC);
+		Pic_Bullet = (HBITMAP)LoadImage(g_hinst, _T("bullet.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		old_Pic_Bullet = (HBITMAP)SelectObject(BulletDC, Pic_Bullet);
+		GetObject(Pic_Bullet, sizeof(BITMAP), &Bmp_Bullet);
+
 		// Boss_B_DC에 대한 비트맵 생성 및 설정
 		Boss_B_DC = CreateCompatibleDC(hDC);
 		Pic_Boss_B_row[0] = (HBITMAP)LoadImage(g_hinst, _T("boss B_row1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
@@ -162,10 +168,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		}
 
 		// Player
-		int anim_index = player.m_anim_state;
-		SelectObject(PlayerDC, Pic_Player[anim_index]);
-		TransparentBlt(mainDC, static_cast<int>(player.m_x), static_cast<int>(player.m_y), Bmp_Player[anim_index].bmWidth, Bmp_Player[anim_index].bmHeight,
-			PlayerDC, 0, 0, Bmp_Player[anim_index].bmWidth, Bmp_Player[anim_index].bmHeight, RGB(255, 255, 255));
+		player.print(mainDC, PlayerDC, BulletDC);
 
 		// Item
 		for (const auto& item : items) {
@@ -268,7 +271,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 			player.m_anim_state = DOWN;
 			break;
 
-		case 'j': 
+		case 'j':
+			player.fire();
+			break;
+
+		case 'k': 
 			if (player.m_on_platform && key_pressed['S']) {
 				player.under_jump();
 			} else {
@@ -338,6 +345,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		SelectObject(PlatformDC, old_Pic_Platform);
 		SelectObject(PlayerDC, old_Pic_Player);
 		SelectObject(WeaponDC, old_Pic_Weapon);
+		SelectObject(BulletDC, old_Pic_Bullet);
 		// 브러시 초기화
 		SelectObject(mainDC, old_Brush);
 		DeleteObject(red_Brush);
@@ -359,6 +367,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		for (int i = 0; i < 4; ++i) {
 			DeleteObject(Pic_Weapon[i]);
 		}
+		DeleteObject(Pic_Bullet);
 		for (int i = 0; i < 7; i++) {
 			DeleteObject(Pic_Boss_B_row[i]);
 			DeleteObject(Pic_Boss_B_col[i]);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common.h"
+#include "CWeapon.h"
 
 class Player {
 public:
@@ -15,6 +16,8 @@ public:
 	bool m_is_rolling;
 	bool m_was_rolling;
 
+	Weapon* m_weapon;
+
 public:
 	Player();
 
@@ -25,6 +28,8 @@ public:
 	void under_jump();
 	void jump();
 	void roll();
+	void fire();
 	void update();
+	void print(HDC hDC, HDC pDC, HDC bDC) const;
 };
 
