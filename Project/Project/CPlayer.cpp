@@ -12,7 +12,8 @@ Player::Player() {
 	m_is_rolling = false;
 	m_was_rolling = false;
 
-	m_weapon = new Weapon(SHOTGUN);
+	m_weapon = new Weapon(SMG);
+	m_old_weapon = nullptr;
 }
 
 void Player::set_velocity(float x_velocity, float y_velocity) {
@@ -76,6 +77,11 @@ void Player::fire() {
 			m_x + (Bmp_Player[m_anim_state].bmWidth / 2) - 5,
 			m_y + (Bmp_Player[m_anim_state].bmHeight / 2) - 7,
 			m_anim_state);
+
+		if (0 == m_weapon->m_rounds) {
+			m_old_weapon = m_weapon;
+			m_weapon = new Weapon(PISTOL);
+		}
 	}
 }
 
@@ -108,10 +114,25 @@ void Player::update() {
 				m_x + (Bmp_Player[m_anim_state].bmWidth / 2) - 5,
 				m_y + (Bmp_Player[m_anim_state].bmHeight / 2) - 7,
 				m_anim_state);
+			--m_weapon->m_rounds;
 			--m_weapon->m_burst_count;
+
+			if (0 == m_weapon->m_rounds) {
+				m_old_weapon = m_weapon;
+				m_weapon = new Weapon(PISTOL);
+			}
 		}
 
 		m_weapon->update();
+	}
+
+	if (m_old_weapon) {
+		m_old_weapon->update();
+		
+		if (0 == m_old_weapon->m_bullets.size()) {
+			delete m_old_weapon;
+			m_old_weapon = nullptr;
+		}
 	}
 }
 
@@ -123,5 +144,9 @@ void Player::print(HDC hDC, HDC pDC, HDC bDC) const {
 	// Weapon
 	if (m_weapon) {
 		m_weapon->print(hDC, bDC);
+	}
+
+	if (m_old_weapon) {
+		m_old_weapon->print(hDC, bDC);
 	}
 }

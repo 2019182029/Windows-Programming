@@ -17,6 +17,7 @@ public:
 	bool m_was_rolling;
 
 	Weapon* m_weapon;
+	Weapon* m_old_weapon;
 
 public:
 	Player();

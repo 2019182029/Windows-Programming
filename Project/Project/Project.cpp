@@ -18,6 +18,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
 void worker();
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom);
+bool player_item_collision(const Player& player, const Item& item);
 bool item_platform_collision(const Item& item, const POINT& platform);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevinstance, LPSTR lpszCmdParam, int nCmdShow) { // WinMain부분에 주석이 일치하지 않는다는 오류는 원래 잘 뜸. 무시해도 됨.
@@ -455,6 +456,25 @@ void worker() {
 				}
 			}
 
+			for (auto iter = items.begin(); iter != items.end();) {
+				if (player_item_collision(player, *iter)) {
+					Weapon* old_weapon = nullptr;
+					if (player.m_weapon) { old_weapon = player.m_weapon; }
+
+					switch (iter->m_type) {
+					case WEAPON:
+						player.m_weapon = new Weapon(iter->m_bmp_index);
+						break;
+					}
+
+					if (old_weapon) { delete old_weapon; }
+
+					iter = items.erase(iter);
+					continue;
+				}
+				++iter;
+			}
+
 			update_time = current_time;
 		}
 
@@ -489,6 +509,26 @@ bool player_platform_collision(const Player& player, const POINT& platform, floa
 		(player_bottom > platform_top) &&
 		(player_left < platform_right) &&
 		(player_right > platform_left)) {
+		return true;
+	}
+	return false;
+}
+
+bool player_item_collision(const Player& player, const Item& item) {
+	float player_top = player.m_y;
+	float player_bottom = player.m_y + Bmp_Player[player.m_anim_state].bmHeight;
+	float player_left = player.m_x;
+	float player_right = player.m_x + Bmp_Player[player.m_anim_state].bmWidth;
+
+	float item_top = item.m_y;
+	float item_bottom = item.m_y + 50.0f;
+	float item_left = item.m_x;
+	float item_right = item.m_x + 50.0f;
+
+	if ((player_top < item_bottom) &&
+		(player_bottom > item_top) &&
+		(player_left < item_right) &&
+		(player_right > item_left)) {
 		return true;
 	}
 	return false;

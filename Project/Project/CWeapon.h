@@ -11,7 +11,7 @@ public:
 
 public:
 	Bullet();
-	Bullet(float x, float y, int dir);
+	Bullet(float x, float y, int dir, float speed = 10.0f);
 	Bullet(float x, float y, float angle);
 
 	void move();

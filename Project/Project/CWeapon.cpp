@@ -9,37 +9,34 @@ Bullet::Bullet() {
 	m_distance = 0.0f;
 }
 
-Bullet::Bullet(float x, float y, int dir) : m_x(x), m_y(y) {
+Bullet::Bullet(float x, float y, int dir, float speed) : m_x(x), m_y(y) {
 	switch (dir) {
 	case UP:
 		m_x_velocity = 0.0f;
-		m_y_velocity = -10.0f;
+		m_y_velocity = -speed;
 		break;
 
 	case DOWN:
 		m_x_velocity = 0.0f;
-		m_y_velocity = 10.0f;
+		m_y_velocity = speed;
 		break;
 
 	case LEFT:
-		m_x_velocity = -10.0f;
+		m_x_velocity = -speed;
 		m_y_velocity = 0.0f;
 		break;
 
 	case RIGHT:
-		m_x_velocity = 10.0f;
+		m_x_velocity = speed;
 		m_y_velocity = 0.0f;
 		break;
-
-	default:
-		m_distance = 2000.0f;
 	}
 
 	m_distance = 0.0f;
 }
 
 Bullet::Bullet(float x, float y, float angle) : m_x(x), m_y(y) {
-	float speed = 8.0f + (rand() % 5);
+	float speed = 7.5f + (rand() % 5);
 
 	m_x_velocity = cosf(angle) * speed;
 	m_y_velocity = sinf(angle) * speed;
@@ -75,31 +72,31 @@ Weapon::Weapon(int type) {
 		m_rounds = 0x7FFF'FFFF;
 		m_attack = 1;
 
-		m_range = 1000.0f;
+		m_range = 1200.0f;
 		m_cooldown = 0.1f;
 		break;
 
 	case SMG:
-		m_rounds = 0x7FFF'FFFF;
+		m_rounds = 10;
 		m_attack = 1;
 
-		m_range = 1000.0f;
+		m_range = 1200.0f;
 		m_cooldown = 0.1f;
 		break;
 
 	case SHOTGUN:
-		m_rounds = 0x7FFF'FFFF;
+		m_rounds = 10;
 		m_attack = 1;
 
-		m_range = 1000.0f;
+		m_range = 600.0f;
 		m_cooldown = 0.1f;
 		break;
 
 	case SNIPER:
-		m_rounds = 0x7FFF'FFFF;
+		m_rounds = 10;
 		m_attack = 1;
 
-		m_range = 1000.0f;
+		m_range = 1200.0f;
 		m_cooldown = 0.1f;
 		break;
 	}
@@ -110,7 +107,7 @@ Weapon::Weapon(int type) {
 void Weapon::fire(int x, int y, int dir) {
 	switch (m_type) {
 	case PISTOL:
-	case SNIPER:
+		--m_rounds;
 		m_bullets.emplace_back(x, y, dir);
 		break;
 
@@ -119,6 +116,8 @@ void Weapon::fire(int x, int y, int dir) {
 		break;
 
 	case SHOTGUN: {
+		--m_rounds;
+
 		float base_angle;
 
 		switch (dir) {
@@ -136,6 +135,11 @@ void Weapon::fire(int x, int y, int dir) {
 		}
 		break;
 	}
+
+	case SNIPER:
+		--m_rounds;
+		m_bullets.emplace_back(x, y, dir, 50.0f);
+		break;
 	}
 }
 
