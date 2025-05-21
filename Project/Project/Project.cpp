@@ -3,6 +3,8 @@
 #include "Boss C.h"
 #include "CPlayer.h"
 
+//#pragma comment(linker,"/entry:WinMainCRTStartup /subsystem:console")
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom);
@@ -79,7 +81,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		Pic_Player[LEFT] = (HBITMAP)LoadImage(g_hinst, _T("player_left.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		Pic_Player[RIGHT] = (HBITMAP)LoadImage(g_hinst, _T("player_right.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		Pic_Player[DODGE] = (HBITMAP)LoadImage(g_hinst, _T("player_dodge.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		old_Pic_Player = (HBITMAP)SelectObject(PlayerDC, Pic_Player[player.m_anim_index]);
+		old_Pic_Player = (HBITMAP)SelectObject(PlayerDC, Pic_Player[player.m_anim_state]);
 		for (int i = 0; i < 6; ++i) {
 			GetObject(Pic_Player[i], sizeof(BITMAP), &Bmp_Player[i]);
 		}
@@ -135,7 +137,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		}
 
 		// Player
-		int anim_index = player.m_anim_index;
+		int anim_index = player.m_anim_state;
 		SelectObject(PlayerDC, Pic_Player[anim_index]);
 		TransparentBlt(mainDC, static_cast<int>(player.m_x), static_cast<int>(player.m_y), Bmp_Player[anim_index].bmWidth, Bmp_Player[anim_index].bmHeight,
 			PlayerDC, 0, 0, Bmp_Player[anim_index].bmWidth, Bmp_Player[anim_index].bmHeight, RGB(255, 255, 255));
@@ -170,7 +172,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	case WM_TIMER: {
 		// Player
 		if (wParam == PLAYER_MOVE) {
-			float old_player_bottom = player.m_y + Bmp_Player[player.m_anim_index].bmHeight;
+			float old_player_bottom = player.m_y + Bmp_Player[player.m_anim_state].bmHeight;
 
 			player.update();
 
@@ -267,15 +269,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	case WM_CHAR: {
 		switch (wParam) {
 		case 'w':
-			player.m_anim_index = UP;
+			player.m_anim_state = UP;
 			break;
 
 		case 's':
-			player.m_anim_index = DOWN;
+			player.m_anim_state = DOWN;
 			break;
 
-		case 'j':
-			player.jump();
+		case 'j': 
+			if (player.m_on_platform && key_pressed['S']) {
+				player.under_jump();
+			} else {
+				player.jump();
+			}
 			break;
 
 		case 'l':
@@ -289,19 +295,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		if (!key_pressed[wParam]) {
 			key_pressed[wParam] = true;
 
-			if (player.m_is_rolling) {
-				break;
-			}
-
 			switch (wParam) {
 			case 'A':
+				if (player.m_is_rolling) { break; }
 				player.set_velocity(-5.0f, 0);
-				player.m_anim_index = LEFT;
+				player.m_anim_state = LEFT;
 				break;
 
 			case 'D':
+				if (player.m_is_rolling) { break; }
 				player.set_velocity(5.0f, 0);
-				player.m_anim_index = RIGHT;
+				player.m_anim_state = RIGHT;
 				break;
 
 			default:
@@ -315,16 +319,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		if (key_pressed[wParam]) {
 			key_pressed[wParam] = false;
 
-			if (player.m_is_rolling) {
-				break;
-			}
-
 			switch (wParam) {
 			case 'A':
+				if (player.m_is_rolling) { break; }
 				player.set_velocity(5.0f, 0);
 				break;
 
 			case 'D':
+				if (player.m_is_rolling) { break; }
 				player.set_velocity(-5.0f, 0);
 				break;
 
@@ -379,10 +381,10 @@ bool player_platform_collision(const Player& player, const POINT& platform, floa
 		return false;
 	}
 
-	int player_top = static_cast<int>(player.m_y);
-	int player_bottom = static_cast<int>(player.m_y) + Bmp_Player[player.m_anim_index].bmHeight;
-	int player_left = static_cast<int>(player.m_x);
-	int player_right = static_cast<int>(player.m_x) + Bmp_Player[player.m_anim_index].bmWidth;
+	float player_top = player.m_y;
+	float player_bottom = player.m_y + Bmp_Player[player.m_anim_state].bmHeight;
+	float player_left = player.m_x;
+	float player_right = player.m_x + Bmp_Player[player.m_anim_state].bmWidth;
 
 	int platform_top = platform.y;
 	int platform_bottom = platform.y + Bmp_Platform.bmHeight;

@@ -11,7 +11,7 @@ public:
 	float m_x, m_y;
 	float m_x_velocity, m_y_velocity;
 
-	int m_anim_index;
+	int m_anim_state;
 	
 	bool m_on_platform;
 	bool m_double_jump;
@@ -26,6 +26,7 @@ public:
 	void set_on_platform(const POINT& platform);
 
 	void move();
+	void under_jump();
 	void jump();
 	void roll();
 	void update();
