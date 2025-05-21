@@ -73,7 +73,7 @@ Weapon::Weapon(int type) {
 		m_attack = 1;
 
 		m_range = 1200.0f;
-		m_cooldown = 0.1f;
+		m_cooldown = 100.0f;
 		break;
 
 	case SMG:
@@ -81,7 +81,7 @@ Weapon::Weapon(int type) {
 		m_attack = 1;
 
 		m_range = 1200.0f;
-		m_cooldown = 0.1f;
+		m_cooldown = 300.0f;
 		break;
 
 	case SHOTGUN:
@@ -89,7 +89,7 @@ Weapon::Weapon(int type) {
 		m_attack = 1;
 
 		m_range = 600.0f;
-		m_cooldown = 0.1f;
+		m_cooldown = 1000.0f;
 		break;
 
 	case SNIPER:
@@ -97,14 +97,19 @@ Weapon::Weapon(int type) {
 		m_attack = 1;
 
 		m_range = 1200.0f;
-		m_cooldown = 0.1f;
+		m_cooldown = 1000.0f;
 		break;
 	}
 
+	m_shot_time = std::chrono::system_clock::now();
 	m_burst_count = 0;
 }
 
 void Weapon::fire(int x, int y, int dir) {
+	if (m_cooldown > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - m_shot_time).count()) {
+		return;
+	}
+
 	switch (m_type) {
 	case PISTOL:
 		--m_rounds;
@@ -141,6 +146,8 @@ void Weapon::fire(int x, int y, int dir) {
 		m_bullets.emplace_back(x, y, dir, 50.0f);
 		break;
 	}
+
+	m_shot_time = std::chrono::system_clock::now();
 }
 
 void Weapon::update() {

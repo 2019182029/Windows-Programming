@@ -28,6 +28,7 @@ public:
 
 	float m_range;
 	float m_cooldown;
+	std::chrono::system_clock::time_point m_shot_time;
 
 	int m_burst_count;
 

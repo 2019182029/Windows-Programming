@@ -15,6 +15,7 @@ public:
 
 	bool m_is_rolling;
 	bool m_was_rolling;
+	std::chrono::system_clock::time_point m_rolled_time;
 
 	Weapon* m_weapon;
 	Weapon* m_old_weapon;

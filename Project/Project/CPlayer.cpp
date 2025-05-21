@@ -11,8 +11,9 @@ Player::Player() {
 
 	m_is_rolling = false;
 	m_was_rolling = false;
+	m_rolled_time = std::chrono::system_clock::now();
 
-	m_weapon = new Weapon(SMG);
+	m_weapon = new Weapon(SHOTGUN);
 	m_old_weapon = nullptr;
 }
 
@@ -48,6 +49,10 @@ void Player::jump() {
 }
 
 void Player::roll() {
+	if (1 > std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - m_rolled_time).count()) {
+		return;
+	}
+
 	if (!m_is_rolling) {
 		if (0.0f < m_x_velocity) {
 			m_x_velocity = 12.5f;
@@ -64,6 +69,8 @@ void Player::roll() {
 			m_is_rolling = true;
 			m_was_rolling = true;
 		}
+
+		m_rolled_time = std::chrono::system_clock::now();
 	}
 }
 
