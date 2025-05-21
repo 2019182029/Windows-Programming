@@ -12,7 +12,7 @@ Player::Player() {
 	m_is_rolling = false;
 	m_was_rolling = false;
 
-	m_weapon = new Weapon(PISTOL);
+	m_weapon = new Weapon(SHOTGUN);
 }
 
 void Player::set_velocity(float x_velocity, float y_velocity) {
@@ -67,6 +67,10 @@ void Player::roll() {
 }
 
 void Player::fire() {
+	if ((IDLE == m_anim_state) || (DODGE == m_anim_state)) {
+		return;
+	}
+
 	if (m_weapon) {
 		m_weapon->fire(
 			m_x + (Bmp_Player[m_anim_state].bmWidth / 2) - 5,
@@ -99,6 +103,14 @@ void Player::update() {
 
 	// Weapon
 	if (m_weapon) {
+		if (m_weapon->m_burst_count) {
+			m_weapon->m_bullets.emplace_back(
+				m_x + (Bmp_Player[m_anim_state].bmWidth / 2) - 5,
+				m_y + (Bmp_Player[m_anim_state].bmHeight / 2) - 7,
+				m_anim_state);
+			--m_weapon->m_burst_count;
+		}
+
 		m_weapon->update();
 	}
 }

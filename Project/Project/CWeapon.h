@@ -12,6 +12,7 @@ public:
 public:
 	Bullet();
 	Bullet(float x, float y, int dir);
+	Bullet(float x, float y, float angle);
 
 	void move();
 	void update();
@@ -27,6 +28,8 @@ public:
 
 	float m_range;
 	float m_cooldown;
+
+	int m_burst_count;
 
 	std::vector<Bullet> m_bullets;
 
