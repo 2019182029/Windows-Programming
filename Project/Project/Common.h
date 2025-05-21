@@ -3,13 +3,15 @@
 // 기타 여러 선언 및 정의를 수행하는 헤더
 
 #define _USE_MATH_DEFINES
-#include<Windows.h>
-#include<tchar.h>
-#include<random>
-#include<iostream>
-#include<math.h>
-#include<cmath>
-#include<vector>
+#include <Windows.h>
+#include <tchar.h>
+#include <random>
+#include <iostream>
+#include <math.h>
+#include <cmath>
+#include <vector>
+#include <thread>
+#include <chrono>
 
 #pragma comment(lib, "msimg32.lib")
 

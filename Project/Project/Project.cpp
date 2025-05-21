@@ -6,10 +6,17 @@
 
 //#pragma comment(linker,"/entry:WinMainCRTStartup /subsystem:console")
 
-std::vector<Item> g_items;
+Player player;
+std::vector<Item> items;
+bool key_pressed[256] = { false };
+
+bool running = true;
+auto update_time = std::chrono::system_clock::now();
+auto item_spawn_time = std::chrono::system_clock::now();
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
+void worker();
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom);
 bool item_platform_collision(const Item& item, const POINT& platform);
 
@@ -40,20 +47,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevinstance, LPSTR lpszCmdPa
 	// x는 값이 커질수록 창이 우측으로, y는 값이 커질수록 창이 아래로 내려가게 된다.
 	hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW, 0, 0, 1200, 1000, NULL, (HMENU)NULL, hInstance, NULL);
 
+	std::thread worker_thread(worker);
+
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
 	while (GetMessage(&Message, 0, 0, 0)) {
 		TranslateMessage(&Message);
 		DispatchMessage(&Message);
 	}
+	
+	running = false;
+	worker_thread.join();
+
 	return Message.wParam;
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	PAINTSTRUCT ps;
 	HDC hDC;
-	static Player player;
-	static bool key_pressed[256] = { false };
 
 	switch (iMessage) {
 	case WM_CREATE: {
@@ -89,7 +100,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		for (int i = 0; i < 6; ++i) {
 			GetObject(Pic_Player[i], sizeof(BITMAP), &Bmp_Player[i]);
 		}
-		SetTimer(hWnd, PLAYER_MOVE, 16, NULL);
 
 		// PlatformDC에 대한 비트맵 생성 및 설정
 		PlatformDC = CreateCompatibleDC(hDC);
@@ -107,8 +117,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 			GetObject(Pic_Weapon[i], sizeof(BITMAP), &Bmp_Weapon[i]);
 		}
 		old_Pic_Weapon = (HBITMAP)SelectObject(WeaponDC, Pic_Weapon[0]);
-		SetTimer(hWnd, ITEM_SPAWN, 10000, NULL);
-		SetTimer(hWnd, ITEM_MOVE, 16, NULL);
 
 		// Boss_B_DC에 대한 비트맵 생성 및 설정
 		Boss_B_DC = CreateCompatibleDC(hDC);
@@ -160,7 +168,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 			PlayerDC, 0, 0, Bmp_Player[anim_index].bmWidth, Bmp_Player[anim_index].bmHeight, RGB(255, 255, 255));
 
 		// Item
-		for (const auto& item : g_items) {
+		for (const auto& item : items) {
 			item.print(mainDC, WeaponDC);
 		}
 
@@ -192,82 +200,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	}
 
 	case WM_TIMER: {
-		// Player
-		if (wParam == PLAYER_MOVE) {
-			float old_player_bottom = player.m_y + Bmp_Player[player.m_anim_state].bmHeight;
-
-			player.update();
-
-			if (!player.m_is_rolling && player.m_was_rolling) {
-				if (key_pressed['A']) {
-					player.set_velocity(-5.0f, 0.0f);
-				}
-
-				if (key_pressed['D']) {
-					player.set_velocity(5.0f, 0.0f);
-				}
-
-				player.m_was_rolling = false;
-			}
-
-			player.m_on_platform = false;
-			switch (stage) {
-			case 4:
-				for (const auto& platform : B.Platform) {
-					if (player_platform_collision(player, platform, old_player_bottom)) {
-						player.set_on_platform(platform);
-						break;
-					}
-				}
-				break;
-
-			case 6:
-				for (const auto& platform : C.Platform) {
-					if (player_platform_collision(player, platform, old_player_bottom)) {
-						player.set_on_platform(platform);
-						break;
-					}
-				}
-				break;
-			}
-		}
-
-		// Item
-		else if (wParam == ITEM_SPAWN) {
-			g_items.emplace_back(WEAPON);
-		}
-		else if (wParam == ITEM_MOVE) {
-			for (auto& item : g_items) {
-				if (item.m_is_falling) {
-					item.update();
-
-					switch (stage) {
-					case 4:
-						for (const auto& platform : B.Platform) {
-							if (item_platform_collision(item, platform)) {
-								item.m_y = platform.y - 50.0f;
-								item.m_is_falling = false;
-								break;
-							}
-						}
-						break;
-
-					case 6:
-						for (const auto& platform : C.Platform) {
-							if (item_platform_collision(item, platform)) {
-								item.m_y = platform.y - 50.0f;
-								item.m_is_falling = false;
-								break;
-							}
-						}
-						break;
-					}
-				}
-			}
-		}
-
 		// 보스 B 공격 생성 타이머
-		else if (wParam == B_make_attack) {
+		if (wParam == B_make_attack) {
 			std::uniform_int_distribution<int> ran_attack( 5, 7 );
 			B.attack_pattern();
 			B.count_attack(B.b_count() + 1);
@@ -437,6 +371,90 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	}
 	}
 	return (DefWindowProc(hWnd, iMessage, wParam, lParam));
+}
+
+void worker() {
+	while (running) {
+		auto current_time = std::chrono::system_clock::now();
+
+		if (16 < std::chrono::duration_cast<std::chrono::milliseconds>(current_time - update_time).count()) {
+			// Player
+			float old_player_bottom = player.m_y + Bmp_Player[player.m_anim_state].bmHeight;
+
+			player.update();
+
+			if (!player.m_is_rolling && player.m_was_rolling) {
+				if (key_pressed['A']) {
+					player.set_velocity(-5.0f, 0.0f);
+				}
+
+				if (key_pressed['D']) {
+					player.set_velocity(5.0f, 0.0f);
+				}
+
+				player.m_was_rolling = false;
+			}
+
+			player.m_on_platform = false;
+
+			switch (stage) {
+			case 4:
+				for (const auto& platform : B.Platform) {
+					if (player_platform_collision(player, platform, old_player_bottom)) {
+						player.set_on_platform(platform);
+						break;
+					}
+				}
+				break;
+
+			case 6:
+				for (const auto& platform : C.Platform) {
+					if (player_platform_collision(player, platform, old_player_bottom)) {
+						player.set_on_platform(platform);
+						break;
+					}
+				}
+				break;
+			}
+
+			// Item
+			for (auto& item : items) {
+				if (item.m_is_falling) {
+					item.update();
+
+					switch (stage) {
+					case 4:
+						for (const auto& platform : B.Platform) {
+							if (item_platform_collision(item, platform)) {
+								item.m_y = platform.y - 50.0f;
+								item.m_is_falling = false;
+								break;
+							}
+						}
+						break;
+
+					case 6:
+						for (const auto& platform : C.Platform) {
+							if (item_platform_collision(item, platform)) {
+								item.m_y = platform.y - 50.0f;
+								item.m_is_falling = false;
+								break;
+							}
+						}
+						break;
+					}
+				}
+			}
+
+			update_time = current_time;
+		}
+
+		if (10 < std::chrono::duration_cast<std::chrono::seconds>(current_time - item_spawn_time).count()) {
+			items.emplace_back(WEAPON);
+
+			item_spawn_time = current_time;
+		}
+	}
 }
 
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom) {
