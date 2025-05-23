@@ -1,8 +1,10 @@
 #include "Common.h"
+#include "Boss A.h"
 #include "Boss B.h"
 #include "Boss C.h"
 #include "CPlayer.h"
 #include "CItem.h"
+#include "Element.h"
 
 //#pragma comment(linker,"/entry:WinMainCRTStartup /subsystem:console")
 
@@ -125,6 +127,27 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		old_Pic_Bullet = (HBITMAP)SelectObject(BulletDC, Pic_Bullet);
 		GetObject(Pic_Bullet, sizeof(BITMAP), &Bmp_Bullet);
 
+		// PortalDC에 대한 비트맵 생성 및 설정
+		PortalDC = CreateCompatibleDC(hDC);
+		Pic_Portal = (HBITMAP)LoadImage(g_hinst, _T("portal.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		old_Pic_Portal = (HBITMAP)SelectObject(PortalDC, Pic_Portal);
+
+		// HealDC에 대한 비트맵 생성 및 설정
+		HealDC = CreateCompatibleDC(hDC);
+		Pic_Heal = (HBITMAP)LoadImage(g_hinst, _T("healing_item.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		old_Pic_Heal = (HBITMAP)SelectObject(HealDC, Pic_Heal);
+
+		// Boss_A_DC에 대한 비트맵 생성 및 설정
+		Boss_A_DC = CreateCompatibleDC(hDC);
+		Pic_Boss_A[0] = (HBITMAP)LoadImage(g_hinst, _T("boss A1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[1] = (HBITMAP)LoadImage(g_hinst, _T("boss A2.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[2] = (HBITMAP)LoadImage(g_hinst, _T("boss A3.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[3] = (HBITMAP)LoadImage(g_hinst, _T("boss A4.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[4] = (HBITMAP)LoadImage(g_hinst, _T("boss A5.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[5] = (HBITMAP)LoadImage(g_hinst, _T("boss A6.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[6] = (HBITMAP)LoadImage(g_hinst, _T("boss A7.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		old_Pic_Boss_A = (HBITMAP)SelectObject(Boss_A_DC, Pic_Boss_A);
+
 		// Boss_B_DC에 대한 비트맵 생성 및 설정
 		Boss_B_DC = CreateCompatibleDC(hDC);
 		Pic_Boss_B_row[0] = (HBITMAP)LoadImage(g_hinst, _T("boss B_row1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
@@ -160,12 +183,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		old_Brush = (HBRUSH)SelectObject(hDC, red_Brush); // 기본 브러시 저장
 		FillRect(mainDC, &rt, (HBRUSH)GetStockObject(WHITE_BRUSH)); // 최종 화면 지워서(하얀 사각형으로 덮어씌워서) 최신화
 		if (stage % 2 == 0) { // 짝수는 보스맵이, 홀수는 휴식 공간이 출력됨
+			// 보스맵
 			SelectObject(MapDC, Pic_BossMap);
 			StretchBlt(mainDC, 0, 0, rt.right, rt.bottom, MapDC, 0, 0, 1200, 1000, SRCCOPY); // 맵을 꽉 채워서 출력하기에 rt 구조체 활용
 		}
 		else {
+			// 휴식 공간
 			SelectObject(MapDC, Pic_RelaxMap);
 			StretchBlt(mainDC, 0, 700, rt.right, 300, MapDC, 0, 0, 1200, 300, SRCCOPY); // 맵 하단부에 폭은 맵 가로 최대치에 높이 300 범위에 출력
+			TransparentBlt(mainDC, portal.px(), portal.py(), 100, 100, PortalDC, 0, 0, 100, 100, RGB(255, 255, 255)); // 포탈
+			heal.emplace_back(500, 600);
+			TransparentBlt(mainDC, heal.begin()->h_x(), heal.begin()->h_y(), 50, 50, HealDC, 0, 0, 50, 50, RGB(255, 255, 255)); // 회복 물약
 		}
 
 		// Player
@@ -176,8 +204,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 			item.print(mainDC, WeaponDC);
 		}
 
+		// 출력
+		StretchBlt(mainDC, 500, 500, 30, 30, PlayerDC, 0, 0, 30, 30, SRCCOPY);
+
+		// 스테이지 2에 대한 처리
+		if (stage == 2) {
+			A.print_stage2();
+			// 타이머 중복 생성 방지
+			if (stage2_onoff == 0) {
+				SetTimer(hWnd, A_animation, 200, NULL);
+				SetTimer(hWnd, A_make_attack, 3000, NULL);
+				SetTimer(hWnd, A_remove_attack, 5000, NULL);
+				SetTimer(hWnd, A_shoot_attack, 100, NULL);
+				A.make_attack(1);
+				stage2_onoff = 1;
+			}
+		}
+
 		// 스테이지 4에 대한 처리
-		if (stage == 4) {
+		else if (stage == 4) {
 			B.print_stage4();
 			// 타이머 중복 생성 방지 (stage4 클리어 후 다음 스테이지로 넘어갈 때 stage4_onoff 다시 0으로 초기화해주기)
 			if (stage4_onoff == 0) {
@@ -188,6 +233,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 				stage4_onoff = 1;
 			}
 		}
+
+		// 스테이지 6에 대한 처리
 		else if (stage == 6) {
 			C.print_stage6();
 			// 타이머 중복 생성 방지
@@ -198,6 +245,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 				stage6_onoff = 1;
 			}
 		}
+
+		// 마지막 보스를 클리어 했을 시 승리했음을 나타내는 메시지 박스 띄움
+		if (stage == 7) {
+			MessageBox(hWnd, _T("승리!"), _T("정보"), MB_OK);
+		}
+
 		BitBlt(hDC, 0, 0, rt.right, rt.bottom, mainDC, 0, 0, SRCCOPY);
 		EndPaint(hWnd, &ps);
 		break;
@@ -232,14 +285,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		else if (wParam == B_shoot_attack) {
 			B.shoot_attack();
 		}
-		// 피격 시 타이머 (0.3초 후에 해당 타이머가 실행되면서 보스의 출력 방식을 원래대로 되돌리고 타이머 삭제)
-		// 즉, 보스는 피격 되자마자 색이 반전되며, B_attacked 타이머를 설정한다. 이후 0.3초 후에 B_attacked 타이머를 통해 색이 원래대로 돌아오는 것)
-		// 피격 체크에 SetTImer(hWnd, B_attacked, 300, NULL); 작성해주기
-		// 피격 시 색 반전은 일단 보류하기
-		else if (wParam == B_attacked) {
-			B.print_type_change();
-			KillTimer(hWnd, B_attacked);
-		}
 		// 보스 B 애니메이션
 		else if (wParam == B_animation) {
 			Boss_B_ani++;
@@ -257,6 +302,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		else if (wParam == C_animation) {
 			Boss_C_ani++;
 			Boss_C_ani = Boss_C_ani % 5;
+		}
+		// 보스 A 애니메이션
+		else if (wParam == A_animation) {
+			Boss_A_ani++;
+			Boss_A_ani = Boss_A_ani % 7;
+		}
+		// 보스 A 공격 생성
+		else if (wParam == A_make_attack) {
+			std::uniform_int_distribution<int> ran{ 1,2 };
+			A.make_attack(ran(dre));
+		}
+		// 보스 공격 제거
+		else if (wParam == A_remove_attack) {
+			for (int i = 0; i < 20; i++) {
+				A.remove_attack();
+			}
+		}
+		// 보스 공격 이동
+		else if (wParam == A_shoot_attack) {
+			A.shoot_attack();
 		}
 		InvalidateRect(hWnd, NULL, FALSE);
 		break;
@@ -341,12 +406,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		// 각 DC 정보 초기화
 		SelectObject(mainDC, old_hBitmap);
 		SelectObject(MapDC, old_Pic_BossMap);
+		SelectObject(Boss_A_DC, old_Pic_Boss_A);
 		SelectObject(Boss_B_DC, old_Pic_Boss_B);
 		SelectObject(Boss_C_DC, old_Pic_Boss_C);
 		SelectObject(PlatformDC, old_Pic_Platform);
 		SelectObject(PlayerDC, old_Pic_Player);
 		SelectObject(WeaponDC, old_Pic_Weapon);
 		SelectObject(BulletDC, old_Pic_Bullet);
+		SelectObject(PortalDC, old_Pic_Portal);
+		SelectObject(HealDC, old_Pic_Heal);
+
 		// 브러시 초기화
 		SelectObject(mainDC, old_Brush);
 		DeleteObject(red_Brush);
@@ -357,7 +426,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		DeleteDC(MapDC);
 		DeleteDC(PlayerDC);
 		DeleteDC(PlatformDC);
+		DeleteDC(PortalDC);
+		DeleteDC(HealDC);
+		DeleteDC(Boss_A_DC);
 		DeleteDC(Boss_B_DC);
+		DeleteDC(Boss_C_DC);
 		DeleteObject(hBitmap);
 		DeleteObject(Pic_BossMap);
 		DeleteObject(Pic_RelaxMap);
@@ -369,9 +442,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 			DeleteObject(Pic_Weapon[i]);
 		}
 		DeleteObject(Pic_Bullet);
+		DeleteObject(Pic_Player);
+		DeleteObject(Pic_Platform);
+		DeleteObject(Pic_Portal);
+		DeleteObject(Pic_Heal);
 		for (int i = 0; i < 7; i++) {
 			DeleteObject(Pic_Boss_B_row[i]);
 			DeleteObject(Pic_Boss_B_col[i]);
+			DeleteObject(Pic_Boss_A[i]);
 		}
 		for (int i = 0; i < 5; i++) {
 			DeleteObject(Pic_Boss_C[i]);

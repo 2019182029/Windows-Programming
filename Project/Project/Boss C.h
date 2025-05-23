@@ -1,5 +1,6 @@
 #pragma once
 #include"Common.h"
+#include "Element.h"
 // Boss C는 60번대 타이머 사용
 #define C_Turning_attack 60
 #define C_Moving 61
@@ -18,8 +19,6 @@ public:
 	int x, y; // 보스 위치
 	int direct; // 1: 우측 상단, 2: 좌측 상단, 3: 좌측 하단, 4: 우측 하단
 	int hp;
-	int count; // 공격 횟수
-	int print_type; // 출력 타입(평소엔 SRCCOPY였다가 주인공 캐릭터에게 피격 당하면 0.3초 간 NOTSRCCOPY로 출력됨)
 	POINT Platform[4]; // 발판 좌표
 	class attack_ball { // 공격 구체
 		int a_x, a_y; // 원 중심점
@@ -48,7 +47,6 @@ public:
 	std::vector<attack_ball> attack;
 public:
 	Boss_C(int x, int y, int direct, int hp) : x(x), y(y), direct(direct), hp(hp) {
-		print_type = SRCCOPY;
 		// 상
 		Platform[0].x = 500;
 		Platform[0].y = 200;
@@ -112,6 +110,19 @@ public:
 			}
 		}
 	}
+	// 회복 아이템 생성 (플레이어 공격과 상호작용 하는 과정에서 호출)
+	void make_heal() {
+		std::uniform_int_distribution<int> ran{ 1, 4 };
+		if (hp < 1000 and hp % 250 == 0) {
+			heal.emplace_back(Platform[ran(dre)].x + 100, Platform[ran(dre)].y - 50);
+		}
+	}
+	// 보스 클리어
+	void next_stage() {
+		if (hp <= 0) {
+			stage++;
+		}
+	}
 	// 출력
 	void print_stage6() {
 		int size = 20; // 구체 크기
@@ -124,6 +135,10 @@ public:
 		}
 		SelectObject(Boss_C_DC, Pic_Boss_C[Boss_C_ani]);
 		TransparentBlt(mainDC, x, y, 200, 200, Boss_C_DC, 0, 0, 200, 200, RGB(255, 255, 255));
+		// 보스 체력바 출력
+		SelectObject(mainDC, red_Brush);
+		Rectangle(mainDC, 150, 900, hp, 950);
+		next_stage();
 	}
 };
 Boss_C C(600, 450, 1, 1000);

@@ -52,14 +52,17 @@ extern HDC PlayerDC;  // 플레이어 캐릭터 관련 DC로, 기본 상태와 구르기 상태를 다
 extern HDC PlatformDC;  // 발판 DC
 extern HDC WeaponDC;  // 무기 DC
 extern HDC BulletDC;  // 총알 DC
-extern HBITMAP hBitmap, Pic_BossMap, Pic_RelaxMap, Pic_Player[6], Pic_Platform, Pic_Weapon[4], Pic_Bullet;
+extern HDC PlatformDC; // 발판 DC
+extern HDC PortalDC; // 포탈
+extern HBITMAP hBitmap, Pic_BossMap, Pic_RelaxMap, Pic_Player[6], Pic_Platform, Pic_Weapon[4], Pic_Bullet, Pic_Portal, Pic_Heal;
 extern BITMAP Bmp_Player[6], Bmp_Platform, Bmp_Weapon[4], Bmp_Bullet;
 
-extern HBITMAP old_hBitmap, old_Pic_BossMap, old_Pic_Player, old_Pic_Platform, old_Pic_Weapon, old_Pic_Bullet;  // 이전 비트맵 정보 저장 (안전한 제거 용도)
+extern HBITMAP old_hBitmap, old_Pic_BossMap, old_Pic_Player, old_Pic_Platform, old_Pic_Weapon, old_Pic_Bullet, old_Pic_Portal, old_Pic_Heal;  // 이전 비트맵 정보 저장 (안전한 제거 용도)
 
 extern HBRUSH red_Brush, blue_Brush, lightgray_Brush, old_Brush;
 
 extern RECT rt; // 윈도우 크기 저장용 RECT 구조체
 
-// 스테이지 구성 양상: 휴식 공간 → 보스 A → 휴식 공간 → 보스 B → 휴식 공간 → 보스 C → 보스 C 클리어하면 게임 승리 메시지 창과 함께 게임 종료
+// 스테이지 구성 양상: 휴식 공간 -> 보스 A -> 휴식 공간 -> 보스 B -> 휴식 공간 -> 보스 C -> 보스 C 클리어하면 게임 승리 메시지 창과 함께 게임 종료
+// 보스를 클리어하면 stage가 1 증가한다. 즉, stage가 7이 되면 우승 메시지를 띄우면 됨
 extern int stage; // 스테이지 구분 (홀수면 휴식 공간, 짝수면 보스맵) (1부터 시작하며, 다음 스테이지로 넘어갈 때마다 1씩 증가시킴) (구현하는 스테이지에 따라 수치 다르게 주고 작업)
