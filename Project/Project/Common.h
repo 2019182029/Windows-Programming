@@ -54,6 +54,7 @@ extern HDC WeaponDC;  // ¹«±â DC
 extern HDC BulletDC;  // ÃÑ¾Ë DC
 extern HDC PlatformDC; // ¹ßÆÇ DC
 extern HDC PortalDC; // Æ÷Å»
+extern HDC HealDC; // È¸º¹
 extern HBITMAP hBitmap, Pic_BossMap, Pic_RelaxMap, Pic_Player[6], Pic_Platform, Pic_Weapon[4], Pic_Bullet, Pic_Portal, Pic_Heal;
 extern BITMAP Bmp_Player[6], Bmp_Platform, Bmp_Weapon[4], Bmp_Bullet;
 

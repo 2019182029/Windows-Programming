@@ -204,9 +204,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 			item.print(mainDC, WeaponDC);
 		}
 
-		// 출력
-		StretchBlt(mainDC, 500, 500, 30, 30, PlayerDC, 0, 0, 30, 30, SRCCOPY);
-
 		// 스테이지 2에 대한 처리
 		if (stage == 2) {
 			A.print_stage2();
@@ -486,6 +483,15 @@ void worker() {
 			player.m_on_platform = false;
 
 			switch (stage) {
+			case 2:
+				for (const auto& platform : A.Platform) {
+					if (player_platform_collision(player, platform, old_player_bottom)) {
+						player.set_on_platform(platform);
+						break;
+					}
+				}
+				break;
+
 			case 4:
 				for (const auto& platform : B.Platform) {
 					if (player_platform_collision(player, platform, old_player_bottom)) {

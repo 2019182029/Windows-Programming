@@ -16,6 +16,7 @@ int stage2_onoff = 0; // 타이머 중복 방지 변수
 int Boss_A_ani = 0; // 애니메이션 변경 변수
 
 class Boss_A {
+public:
 	int x, y; // 보스 위치
 	int hp;
 	POINT Platform[4]; // 발판 좌표
