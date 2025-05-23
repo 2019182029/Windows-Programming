@@ -1,11 +1,11 @@
 #pragma once
 #include "Common.h"
+#include "Element.h"
 // Boss B는 40번대 타이머 사용
 #define B_make_attack 40
 #define B_remove_attack 41
 #define B_shoot_attack 42
-#define B_attacked 43
-#define B_animation 44
+#define B_animation 43
 
 HDC Boss_B_DC;
 HBITMAP Pic_Boss_B_row[7], Pic_Boss_B_col[7];
@@ -22,7 +22,6 @@ class Boss_B {
 	int direct; // 1: 상, 2: 하, 3: 좌, 4: 우
 	int hp;
 	int count; // 공격 횟수
-	int print_type; // 출력 타입(평소엔 SRCCOPY였다가 주인공 캐릭터에게 피격 당하면 0.3초 간 NOTSRCCOPY로 출력됨)
 	POINT Platform[4]; // 발판 좌표
 	class Attack { // 공격용 가시의 위치 정보를 저장한 클래스
 		int a_x, a_y; // 중심점 좌표
@@ -109,7 +108,6 @@ class Boss_B {
 public:
 	// 생성자
 	Boss_B(int direct, int hp) : direct(direct), hp(hp) {
-		print_type = SRCCOPY; // 출력 방식
 		count = 0;
 		// 발판 위치 초기화
 		Platform[0].x = 200;
@@ -149,11 +147,6 @@ public:
 	void count_attack(int num) { count = num; }
 	// 방향 변경 함수
 	void move_direct(int num) { direct = num; }
-	// 보스 출력 방식 변경
-	void print_type_change() {
-		if (print_type == SRCCOPY) { print_type = NOTSRCCOPY; }
-		else if (print_type == NOTSRCCOPY) { print_type = SRCCOPY; }
-	}
 	// 보스 공격 패턴 (공격을 생성함)
 	void attack_pattern() {
 		b_pos();
@@ -191,6 +184,19 @@ public:
 			}
 		}
 	}
+	// 회복 아이템 생성 (플레이어 공격과 상호작용 하는 과정에서 호출)
+	void make_heal() {
+		std::uniform_int_distribution<int> ran{ 1, 4 };
+		if (hp < 1000 and hp % 250 == 0) {
+			heal.emplace_back(Platform[ran(dre)].x + 100, Platform[ran(dre)].y - 50);
+		}
+	}
+	// 보스 클리어
+	void next_stage() {
+		if (hp <= 0) {
+			stage++;
+		}
+	}
 	// 출력
 	void print_stage4() {
 		// 보스 출력
@@ -217,6 +223,7 @@ public:
 		// 보스 체력바 출력
 		SelectObject(mainDC, red_Brush);
 		Rectangle(mainDC, 150, 900, hp, 950);
+		next_stage();
 	}
 };
 Boss_B B(4, 1000); // 방향과 보스의 체력을 생성자의 인자로 줌

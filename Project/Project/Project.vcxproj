@@ -22,9 +22,11 @@
     <ClCompile Include="Project.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Boss A.h" />
     <ClInclude Include="Boss B.h" />
     <ClInclude Include="Boss C.h" />
     <ClInclude Include="Common.h" />
+    <ClInclude Include="Element.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
