@@ -14,6 +14,8 @@ Player player;
 std::vector<Item> items;
 bool key_pressed[256] = { false };
 
+int cumulative_damage = 0;
+
 bool running = true;
 auto update_time = std::chrono::system_clock::now();
 auto item_spawn_time = std::chrono::system_clock::now();
@@ -525,6 +527,9 @@ void worker() {
 						break;
 					}
 				}
+
+				player_boss_a_collision();
+				bullet_boss_a_collision();
 				break;
 
 			case 4:
@@ -546,6 +551,9 @@ void worker() {
 						break;
 					}
 				}
+
+				player_boss_c_collision();
+				bullet_boss_c_collision();
 				break;
 			}
 
@@ -561,6 +569,17 @@ void worker() {
 						if (675 < (item.m_y + Bmp_Heal.bmHeight)) {
 							item.m_y = 675 - 50.0f;
 						}
+						break;
+
+					case 2:
+						for (const auto& platform : A.Platform) {
+							if (item_platform_collision(item, platform)) {
+								item.m_y = platform.y - 50.0f;
+								item.m_is_falling = false;
+								break;
+							}
+						}
+						break;
 
 					case 4:
 						for (const auto& platform : B.Platform) {
@@ -632,6 +651,8 @@ void change_stage() {
 
 	items.clear();
 	items.emplace_back(500.0f, 500.0f, ITEM_TYPE::HEAL);
+
+	cumulative_damage = 0;
 
 	++stage;
 }
@@ -705,11 +726,52 @@ bool player_portal_collision(const Player& player, const Portal& portal) {
 }
 
 void player_boss_a_collision() {
+	if (player.m_invincible || player.m_is_rolling) {
+		return;
+	}
+
+	float player_top = player.m_y;
+	float player_bottom = player.m_y + Bmp_Player[player.m_anim_state].bmHeight;
+	float player_left = player.m_x;
+	float player_right = player.m_x + Bmp_Player[player.m_anim_state].bmWidth;
+
+	float boss_top = static_cast<float>(A.y);
+	float boss_bottom = A.y + 600.0f;
+	float boss_left = static_cast<float>(A.x);
+	float boss_right = A.x + 100.0f;
+
+	// Player - Boss Collision
+	if ((player_top < boss_bottom) &&
+		(player_bottom > boss_top) &&
+		(player_left < boss_right) &&
+		(player_right > boss_left)) {
+		player.damaged();
+		return;
+	}
+
+	// Player - Attack Collision
+	for (int i = 0; i < A.attack.size(); i = i + 20) {
+		POINT* P1 = A.attack[i].a_point();
+		POINT* P2 = A.attack[i + 19].a_point();
+
+		float attack_top = static_cast<float>(min(min(P1[0].y, P1[1].y), min(P1[2].y, min(P2[0].y, min(P2[1].y, P2[2].y)))));
+		float attack_bottom = static_cast<float>(max(max(P1[0].y, P1[1].y), max(P1[2].y, max(P2[0].y, max(P2[1].y, P2[2].y)))));
+		float attack_left = static_cast<float>(min(min(P1[0].x, P1[1].x), min(P1[2].x, min(P2[0].x, min(P2[1].x, P2[2].x)))));
+		float attack_right = static_cast<float>(max(max(P1[0].x, P1[1].x), max(P1[2].x, max(P2[0].x, max(P2[1].x, P2[2].x)))));
+
+		if ((player_top < attack_bottom) &&
+			(player_bottom > attack_top) &&
+			(player_left < attack_right) &&
+			(player_right > attack_left)) {
+			player.damaged();
+			return;
+		}
+	}
 }
 
 void player_boss_b_collision() {
-	if (player.m_invincible) { 
-		return; 
+	if (player.m_invincible || player.m_is_rolling) {
+		return;
 	}
 
 	float player_top = player.m_y;
@@ -718,6 +780,7 @@ void player_boss_b_collision() {
 	float player_right = player.m_x + Bmp_Player[player.m_anim_state].bmWidth;
 
 	float boss_top, boss_bottom, boss_left, boss_right;
+
 	if (B.b_direct() == 1 || B.b_direct() == 2) {
 		boss_top = static_cast<float>(B.b_y());
 		boss_bottom = B.b_y() + 100.0f;
@@ -742,6 +805,7 @@ void player_boss_b_collision() {
 	// Player - Attack Collision
 	for (auto& attack : B.attack) {
 		POINT* P = attack.a_Point();
+
 		float attack_top = static_cast<float>(min(min(P[0].y, P[1].y), P[2].y));
 		float attack_bottom = static_cast<float>(max(max(P[0].y, P[1].y), P[2].y));
 		float attack_left = static_cast<float>(min(min(P[0].x, P[1].x), P[2].x));
@@ -758,9 +822,99 @@ void player_boss_b_collision() {
 }
 
 void player_boss_c_collision() {
+	if (player.m_invincible || player.m_is_rolling) {
+		return;
+	}
+
+	float player_top = player.m_y;
+	float player_bottom = player.m_y + Bmp_Player[player.m_anim_state].bmHeight;
+	float player_left = player.m_x;
+	float player_right = player.m_x + Bmp_Player[player.m_anim_state].bmWidth;
+
+	float boss_top = static_cast<float>(C.y);
+	float boss_bottom = C.y + 200.0f;
+	float boss_left = static_cast<float>(C.x);
+	float boss_right = C.x + 200.0f;
+
+	// Player - Boss Collision
+	if ((player_top < boss_bottom) &&
+		(player_bottom > boss_top) &&
+		(player_left < boss_right) &&
+		(player_right > boss_left)) {
+		player.damaged();
+		return;
+	}
+
+	// Player - Attack Collision
+	int size = 20;
+	for (auto& attack : C.attack) {
+		float attack_top = static_cast<float>(attack.ay() - size);
+		float attack_bottom = static_cast<float>(attack.ay() + size);
+		float attack_left = static_cast<float>(attack.ax() - size);
+		float attack_right = static_cast<float>(attack.ax() + size);
+
+		if ((player_top < attack_bottom) &&
+			(player_bottom > attack_top) &&
+			(player_left < attack_right) &&
+			(player_right > attack_left)) {
+			player.damaged();
+			return;
+		}
+	}
 }
 
 void bullet_boss_a_collision() {
+	float boss_top = static_cast<float>(A.y);
+	float boss_bottom = A.y + 600.0f;
+	float boss_left = static_cast<float>(A.x);
+	float boss_right = A.x + 100.0f;
+
+	for (auto iter = player.m_weapon->m_bullets.begin(); iter != player.m_weapon->m_bullets.end();) {
+		if ((boss_left < iter->m_x) &&
+			(iter->m_x < boss_right) &&
+			(boss_top < iter->m_y) &&
+			(iter->m_y < boss_bottom)) {
+			A.hp -= player.m_weapon->m_attack;
+			cumulative_damage += player.m_weapon->m_attack;
+			iter = player.m_weapon->m_bullets.erase(iter);
+
+			if (0 >= A.hp) {
+				change_stage();
+				return;
+			}
+
+			if (250 <= cumulative_damage) {
+				cumulative_damage = (cumulative_damage % 250);
+				items.emplace_back(ITEM_TYPE::HEAL);
+			}
+			continue;
+		}
+		++iter;
+	}
+
+	for (auto weapon : player.m_old_weapon) {
+		for (auto iter = weapon->m_bullets.begin(); iter != weapon->m_bullets.end();) {
+			if ((boss_left < iter->m_x) &&
+				(iter->m_x < boss_right) &&
+				(boss_top < iter->m_y) &&
+				(iter->m_y < boss_bottom)) {
+				A.hp -= weapon->m_attack;
+				iter = weapon->m_bullets.erase(iter);
+
+				if (0 >= A.hp) {
+					change_stage();
+					return;
+				}
+
+				if (250 <= cumulative_damage) {
+					cumulative_damage = (cumulative_damage % 250);
+					items.emplace_back(ITEM_TYPE::HEAL);
+				}
+				continue;
+			}
+			++iter;
+		}
+	}
 }
 
 void bullet_boss_b_collision() {
@@ -786,13 +940,14 @@ void bullet_boss_b_collision() {
 			B.hp -= player.m_weapon->m_attack;
 			iter = player.m_weapon->m_bullets.erase(iter);
 
-			if (0 == (B.hp % 250)) {
-				if (0 == B.hp) {
-					change_stage();
-					return;
-				} else {
-					items.emplace_back(500.0f, 500.0f, ITEM_TYPE::HEAL);
-				}
+			if (0 >= B.hp) {
+				change_stage();
+				return;
+			}
+
+			if (250 <= cumulative_damage) {
+				cumulative_damage = (cumulative_damage % 250);
+				items.emplace_back(ITEM_TYPE::HEAL);
 			}
 			continue;
 		}
@@ -808,14 +963,14 @@ void bullet_boss_b_collision() {
 				B.hp -= weapon->m_attack;
 				iter = weapon->m_bullets.erase(iter);
 
-				if (0 == (B.hp % 250)) {
-					if (0 == B.hp) {
-						change_stage();
-						return;
-					}
-					else {
-						items.emplace_back(500.0f, 500.0f, ITEM_TYPE::HEAL);
-					}
+				if (0 >= B.hp) {
+					change_stage();
+					return;
+				}
+
+				if (250 <= cumulative_damage) {
+					cumulative_damage = (cumulative_damage % 250);
+					items.emplace_back(ITEM_TYPE::HEAL);
 				}
 				continue;
 			}
@@ -825,6 +980,56 @@ void bullet_boss_b_collision() {
 }
 
 void bullet_boss_c_collision() {
+	float boss_top = static_cast<float>(C.y);
+	float boss_bottom = C.y + 200.0f;
+	float boss_left = static_cast<float>(C.x);
+	float boss_right = C.x + 200.0f;
+
+	for (auto iter = player.m_weapon->m_bullets.begin(); iter != player.m_weapon->m_bullets.end();) {
+		if ((boss_left < iter->m_x) &&
+			(iter->m_x < boss_right) &&
+			(boss_top < iter->m_y) &&
+			(iter->m_y < boss_bottom)) {
+			C.hp -= player.m_weapon->m_attack;
+			iter = player.m_weapon->m_bullets.erase(iter);
+
+			if (0 >= C.hp) {
+				change_stage();
+				return;
+			}
+
+			if (250 <= cumulative_damage) {
+				cumulative_damage = (cumulative_damage % 250);
+				items.emplace_back(ITEM_TYPE::HEAL);
+			}
+			continue;
+		}
+		++iter;
+	}
+
+	for (auto weapon : player.m_old_weapon) {
+		for (auto iter = weapon->m_bullets.begin(); iter != weapon->m_bullets.end();) {
+			if ((boss_left < iter->m_x) &&
+				(iter->m_x < boss_right) &&
+				(boss_top < iter->m_y) &&
+				(iter->m_y < boss_bottom)) {
+				C.hp -= weapon->m_attack;
+				iter = weapon->m_bullets.erase(iter);
+
+				if (0 >= C.hp) {
+					change_stage();
+					return;
+				}
+
+				if (250 <= cumulative_damage) {
+					cumulative_damage = (cumulative_damage % 250);
+					items.emplace_back(ITEM_TYPE::HEAL);
+				}
+				continue;
+			}
+			++iter;
+		}
+	}
 }
 
 bool item_platform_collision(const Item& item, const POINT& platform) {

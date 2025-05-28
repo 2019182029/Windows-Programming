@@ -114,7 +114,7 @@ public:
 	void make_heal() {
 		std::uniform_int_distribution<int> ran{ 1, 4 };
 		if (hp < 1000 and hp % 250 == 0) {
-			heal.emplace_back(Platform[ran(dre)].x + 100, Platform[ran(dre)].y - 50);
+			//heal.emplace_back(Platform[ran(dre)].x + 100, Platform[ran(dre)].y - 50);
 		}
 	}
 	// 보스 클리어
@@ -138,7 +138,7 @@ public:
 		// 보스 체력바 출력
 		SelectObject(mainDC, red_Brush);
 		Rectangle(mainDC, 150, 900, hp, 950);
-		next_stage();
+		//next_stage();
 	}
 };
 Boss_C C(600, 450, 1, 1000);

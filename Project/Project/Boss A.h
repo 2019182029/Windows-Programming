@@ -139,7 +139,7 @@ public:
 	void make_heal() {
 		std::uniform_int_distribution<int> ran{ 1, 4 };
 		if (hp < 1000 and hp % 250 == 0) {
-			heal.emplace_back(Platform[ran(dre)].x + 100, Platform[ran(dre)].y - 50);
+			//heal.emplace_back(Platform[ran(dre)].x + 100, Platform[ran(dre)].y - 50);
 		}
 	}
 	// 보스 클리어
@@ -166,7 +166,7 @@ public:
 		//for (auto it = heal.begin(); it != heal.end(); ++it) {
 		//	TransparentBlt(mainDC, it->h_x(), it->h_y(), 50, 50, HealDC, 0, 0, 50, 50, RGB(255, 255, 255));
 		//}
-		next_stage();
+		//next_stage();
 	}
 };
 Boss_A A(1025, 200, 1000);
