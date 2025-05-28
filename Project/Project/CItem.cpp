@@ -68,6 +68,11 @@ void Item::print(HDC hDC, HDC iDC) const {
 		SelectObject(iDC, Pic_Weapon[m_bmp_index]);
 		TransparentBlt(hDC, static_cast<int>(m_x), static_cast<int>(m_y), 50, 50,
 			iDC, 0, 0, Bmp_Weapon[m_bmp_index].bmWidth, Bmp_Weapon[m_bmp_index].bmHeight, RGB(255, 255, 255));
+
+		SelectObject(hDC, oldPen);
+		SelectObject(hDC, oldBrush);
+		DeleteObject(hPen);
+		DeleteObject(hatchBrush);
 		break;
 
 	case HEAL:
@@ -83,11 +88,11 @@ void Item::print(HDC hDC, HDC iDC) const {
 		SelectObject(iDC, Pic_Heal);
 		TransparentBlt(hDC, static_cast<int>(m_x), static_cast<int>(m_y), 50, 50,
 			iDC, 0, 0, Bmp_Heal.bmWidth, Bmp_Heal.bmHeight, RGB(255, 255, 255));
+
+		SelectObject(hDC, oldPen);
+		SelectObject(hDC, oldBrush);
+		DeleteObject(hPen);
+		DeleteObject(hatchBrush);		
 		break;
 	}
-
-	SelectObject(hDC, oldPen);
-	SelectObject(hDC, oldBrush);
-	DeleteObject(hPen);
-	DeleteObject(hatchBrush);
 }

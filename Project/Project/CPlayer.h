@@ -5,6 +5,9 @@
 
 class Player {
 public:
+	int m_hp;
+	int m_max_hp;
+
 	float m_x, m_y;
 	float m_x_velocity, m_y_velocity;
 
@@ -27,6 +30,7 @@ public:
 	void set_on_ground(const int y_ground);
 	void set_on_platform(const POINT& platform);
 
+	void heal(int amount);
 	void move();
 	void under_jump();
 	void jump();

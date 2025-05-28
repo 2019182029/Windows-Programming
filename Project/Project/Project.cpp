@@ -23,7 +23,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 void worker();
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom);
 bool player_item_collision(const Player& player, const Item& item);
-bool player_portal_collision(const Player& player, Portal& portal);
+bool player_portal_collision(const Player& player, const Portal& portal);
+bool player_boss_a_collision(const Player& player, const Boss_A& boss);
+bool player_boss_b_collision(const Player& player, const Boss_B& boss);
+bool player_boss_c_collision(const Player& player, const Boss_C& boss);
 bool item_platform_collision(const Item& item, const POINT& platform);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevinstance, LPSTR lpszCmdParam, int nCmdShow) { // WinMain부분에 주석이 일치하지 않는다는 오류는 원래 잘 뜸. 무시해도 됨.
@@ -506,7 +509,7 @@ void worker() {
 
 				if (player_portal_collision(player, portal)) {
 					player.m_x = 250.0f; player.m_y = 50.0f;
-					++stage;
+					stage = 4;
 				}
 				InvalidateRect(g_hWnd, NULL, FALSE);
 				break;
@@ -587,6 +590,7 @@ void worker() {
 						break;
 
 					case HEAL:
+						player.heal(player.m_max_hp / 2);
 						break;
 					}
 
@@ -658,7 +662,7 @@ bool player_item_collision(const Player& player, const Item& item) {
 	return false;
 }
 
-bool player_portal_collision(const Player& player, Portal& portal) {
+bool player_portal_collision(const Player& player, const Portal& portal) {
 	float player_top = player.m_y;
 	float player_bottom = player.m_y + Bmp_Player[player.m_anim_state].bmHeight;
 	float player_left = player.m_x;
@@ -675,6 +679,18 @@ bool player_portal_collision(const Player& player, Portal& portal) {
 		(player_right > portal_left)) {
 		return true;
 	}
+	return false;
+}
+
+bool player_boss_a_collision(const Player& player, const Boss_A& boss) {
+	return false;
+}
+
+bool player_boss_b_collision(const Player& player, const Boss_B& boss) {
+	return false;
+}
+
+bool player_boss_c_collision(const Player& player, const Boss_C& boss) {
 	return false;
 }
 

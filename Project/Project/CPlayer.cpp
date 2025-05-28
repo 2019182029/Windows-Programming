@@ -1,6 +1,9 @@
 #include "CPlayer.h"
 
 Player::Player() {
+	m_hp = 10;
+	m_max_hp = 10;
+
 	m_x = 250.0f; m_y = 0.0f;
 	m_x_velocity = 0.0f; m_y_velocity = 0.0f;
 
@@ -13,7 +16,7 @@ Player::Player() {
 	m_was_rolling = false;
 	m_rolled_time = std::chrono::system_clock::now();
 
-	m_weapon = new Weapon(PISTOL);
+	m_weapon = new Weapon(SHOTGUN);
 }
 
 void Player::set_velocity(float x_velocity, float y_velocity) {
@@ -35,6 +38,10 @@ void Player::set_on_platform(const POINT& platform) {
 
 	m_on_platform = true;
 	m_double_jump = true;
+}
+
+void Player::heal(int amount) {
+	m_hp = min(m_hp + amount, m_max_hp);
 }
 
 void Player::move() {
@@ -169,4 +176,48 @@ void Player::print(HDC hDC, HDC pDC, HDC bDC) const {
 			old_weapon->print(hDC, bDC);
 		}
 	}
+
+	// UI - Weapon
+	HPEN hPen = CreatePen(PS_SOLID, 5, RGB(0, 0, 0));
+	HPEN oldPen = (HPEN)SelectObject(hDC, hPen);
+	HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 255));
+	HBRUSH oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
+
+	if (m_weapon) {
+		RoundRect(hDC, 5, 5, 55, 55, 10, 10);
+
+		SelectObject(WeaponDC, Pic_Weapon[m_weapon->m_type]);
+		TransparentBlt(hDC, 5, 5, 50, 50,
+			WeaponDC, 0, 0, Bmp_Weapon[m_weapon->m_type].bmWidth, Bmp_Weapon[m_weapon->m_type].bmHeight, RGB(255, 255, 255));
+
+		RECT Rect = { 5, 30, 50, 50 };
+		std::wstring Text;
+
+		if (m_weapon->m_rounds > 30) {
+			Text = L"¡Ä";
+		}
+		else {
+			Text = std::to_wstring(m_weapon->m_rounds);
+		}
+
+		SetBkMode(hDC, TRANSPARENT);
+		SetTextColor(hDC, RGB(0, 0, 0));
+		DrawText(hDC, Text.c_str(), -1, &Rect, DT_RIGHT | DT_BOTTOM | DT_SINGLELINE);
+	}
+
+	// UI - Player
+	hPen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
+	oldPen = (HPEN)SelectObject(hDC, hPen);
+	hBrush = CreateSolidBrush(RGB(255, 0, 0));
+	oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
+
+	for (int i = 0; i < m_hp; ++i) {
+		Rectangle(hDC, 60 + 25 * i, 5, 
+			60 + 25 * (i + 1), 25);
+	}
+
+	SelectObject(hDC, oldPen);
+	SelectObject(hDC, oldBrush);
+	DeleteObject(hPen);
+	DeleteObject(hBrush);
 }
