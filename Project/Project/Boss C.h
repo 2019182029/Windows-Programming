@@ -28,11 +28,9 @@ public:
 		int r; // 반지름
 	public:
 		attack_ball(int degree, int r) : degree(degree), r(r) {
-			a_x = 600 + r * cos(rad);
-			a_y = 450 + r * sin(rad);
 			rad = degree * M_PI / 180;
-			a_x = 600 + r * cos(rad);
-			a_y = 450 + r * sin(rad);
+			a_x = static_cast<int>(600 + r * cos(rad));
+			a_y = static_cast <int>(450 + r * sin(rad));
 		}
 		int ax() { return a_x; }
 		int ay() { return a_y; }
@@ -40,8 +38,8 @@ public:
 		void turn_ball() { 
 			degree += 2; // 한 번의 회전량 
 			rad = degree * M_PI / 180; 
-			a_x = 600 + r * cos(rad);
-			a_y = 450 + r * sin(rad);
+			a_x = static_cast<int>(600 + r * cos(rad));
+			a_y = static_cast <int>(450 + r * sin(rad));
 		}
 	};
 	std::vector<attack_ball> attack;

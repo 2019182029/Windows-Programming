@@ -24,15 +24,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
 void worker();
 void change_stage();
+
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom);
+
 bool player_item_collision(const Player& player, const Item& item);
 bool player_portal_collision(const Player& player, const Portal& portal);
+
+void player_map_collision();
+void player_thorn_collision();
 void player_boss_a_collision();
 void player_boss_b_collision();
 void player_boss_c_collision();
+
+void bullet_map_collision();
 void bullet_boss_a_collision();
 void bullet_boss_b_collision();
 void bullet_boss_c_collision();
+
 bool item_platform_collision(const Item& item, const POINT& platform);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevinstance, LPSTR lpszCmdParam, int nCmdShow) { // WinMain부분에 주석이 일치하지 않는다는 오류는 원래 잘 뜸. 무시해도 됨.
@@ -264,11 +272,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 			}
 		}
 
-		// 마지막 보스를 클리어 했을 시 승리했음을 나타내는 메시지 박스 띄움
-		if (stage == 7) {
-			MessageBox(hWnd, _T("승리!"), _T("정보"), MB_OK);
-		}
-
 		BitBlt(hDC, 0, 0, rt.right, rt.bottom, mainDC, 0, 0, SRCCOPY);
 		EndPaint(hWnd, &ps);
 		break;
@@ -290,7 +293,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 					}
 					else { ++it; }
 				}
-				std::uniform_int_distribution<int> ran_move( 0, numbers.size() - 1);
+				std::uniform_int_distribution<int> ran_move(0, static_cast<int>(numbers.size() - 1));
 				B.move_direct(numbers[ran_move(dre)]);
 				B.count_attack(0);
 			}
@@ -508,16 +511,13 @@ void worker() {
 			case 1:
 			case 3:
 			case 5:
-				if (700 < (player.m_y + Bmp_Player[player.m_anim_state].bmHeight)) {
-					player.set_on_ground(700);
-				}
-
 				if (player_portal_collision(player, portal)) {
-					player.m_x = 250.0f; player.m_y = 50.0f;
+					player.m_x = 250.0f; player.m_y = 200.0f;
 					items.clear();
 					++stage;
 				}
-				InvalidateRect(g_hWnd, NULL, FALSE);
+
+				player_map_collision();
 				break;
 
 			case 2:
@@ -528,7 +528,11 @@ void worker() {
 					}
 				}
 
+				player_map_collision();
+				player_thorn_collision();
 				player_boss_a_collision();
+
+				bullet_map_collision();
 				bullet_boss_a_collision();
 				break;
 
@@ -540,7 +544,11 @@ void worker() {
 					}
 				}
 
+				player_map_collision();
+				player_thorn_collision();
 				player_boss_b_collision();
+
+				bullet_map_collision();
 				bullet_boss_b_collision();
 				break;
 
@@ -552,8 +560,16 @@ void worker() {
 					}
 				}
 
+				player_map_collision();
+				player_thorn_collision();
 				player_boss_c_collision();
+
+				bullet_map_collision();
 				bullet_boss_c_collision();
+				break;
+
+			case 7:
+				player_map_collision();
 				break;
 			}
 
@@ -566,6 +582,7 @@ void worker() {
 					case 1:
 					case 3:
 					case 5:
+					case 7:
 						if (675 < (item.m_y + Bmp_Heal.bmHeight)) {
 							item.m_y = 675 - 50.0f;
 						}
@@ -627,6 +644,8 @@ void worker() {
 			}
 
 			update_time = current_time;
+
+			InvalidateRect(g_hWnd, NULL, FALSE);
 		}
 
 		// Spawn Item
@@ -641,7 +660,7 @@ void worker() {
 }
 
 void change_stage() {
-	player.m_x = 250.0f; player.m_y = 50.0f;
+	player.m_x = 250.0f; player.m_y = 200.0f;
 
 	player.m_weapon->m_bullets.clear();
 	for (auto& weapon : player.m_old_weapon) {
@@ -655,6 +674,11 @@ void change_stage() {
 	cumulative_damage = 0;
 
 	++stage;
+
+	// 마지막 보스를 클리어 했을 시 승리했음을 나타내는 메시지 박스 띄움
+	if (stage == 7) {
+		MessageBox(g_hWnd, _T("승리!"), _T("정보"), MB_OK);
+	}
 }
 
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom) {
@@ -723,6 +747,46 @@ bool player_portal_collision(const Player& player, const Portal& portal) {
 		return true;
 	}
 	return false;
+}
+
+void player_map_collision() {
+	if (1 == (stage % 2)) {
+		if (700.0f - Bmp_Player[player.m_anim_state].bmHeight < player.m_y) { player.set_on_ground(700.0f - Bmp_Player[player.m_anim_state].bmHeight); }
+		if (0.0f > player.m_x) { player.m_x = 0.0f; }
+		if (rt.right - Bmp_Player[player.m_anim_state].bmWidth < player.m_x) { player.m_x = static_cast<float>(rt.right) - Bmp_Player[player.m_anim_state].bmWidth; }
+	} else {
+		if (30.0f > player.m_y) { player.m_y = 30.0f; }
+		if (rt.bottom - 30.0f - Bmp_Player[player.m_anim_state].bmHeight < player.m_y) { player.set_on_ground(rt.bottom - 30.0f - Bmp_Player[player.m_anim_state].bmHeight); }
+		if (20.0f > player.m_x) { player.m_x = 20.0f; }
+		if (rt.right - 20.0f - Bmp_Player[player.m_anim_state].bmWidth < player.m_x) { player.m_x = rt.right - 20.0f - Bmp_Player[player.m_anim_state].bmWidth; }
+	}
+}
+
+void player_thorn_collision() {
+	if (player.m_invincible || player.m_is_rolling) {
+		return;
+	}
+
+	float player_top = player.m_y;
+	float player_bottom = player.m_y + Bmp_Player[player.m_anim_state].bmHeight;
+	float player_left = player.m_x;
+	float player_right = player.m_x + Bmp_Player[player.m_anim_state].bmWidth;
+
+
+	if (rt.bottom - 65.0f < player_bottom) {
+		player.damaged();
+		player.m_y_velocity = -19.8f;
+		player.m_double_jump = true;
+		return;
+	}
+
+	if ((65.0f > player_top) ||
+		(50.0f > player_left) || 
+		(rt.right - 50.0f < player_right)) {
+		player.damaged();
+		player.m_double_jump = true;
+		return;
+	}
 }
 
 void player_boss_a_collision() {
@@ -863,6 +927,10 @@ void player_boss_c_collision() {
 	}
 }
 
+void bullet_map_collision() {
+
+}
+
 void bullet_boss_a_collision() {
 	float boss_top = static_cast<float>(A.y);
 	float boss_bottom = A.y + 600.0f;
@@ -878,7 +946,7 @@ void bullet_boss_a_collision() {
 			cumulative_damage += player.m_weapon->m_attack;
 			iter = player.m_weapon->m_bullets.erase(iter);
 
-			if (0 >= A.hp) {
+			if (150 >= A.hp) {
 				change_stage();
 				return;
 			}
@@ -899,9 +967,10 @@ void bullet_boss_a_collision() {
 				(boss_top < iter->m_y) &&
 				(iter->m_y < boss_bottom)) {
 				A.hp -= weapon->m_attack;
+				cumulative_damage += player.m_weapon->m_attack;
 				iter = weapon->m_bullets.erase(iter);
 
-				if (0 >= A.hp) {
+				if (150 >= A.hp) {
 					change_stage();
 					return;
 				}
@@ -938,9 +1007,10 @@ void bullet_boss_b_collision() {
 			(boss_top < iter->m_y) &&
 			(iter->m_y < boss_bottom)) {
 			B.hp -= player.m_weapon->m_attack;
+			cumulative_damage += player.m_weapon->m_attack;
 			iter = player.m_weapon->m_bullets.erase(iter);
 
-			if (0 >= B.hp) {
+			if (150 >= B.hp) {
 				change_stage();
 				return;
 			}
@@ -961,9 +1031,10 @@ void bullet_boss_b_collision() {
 				(boss_top < iter->m_y) &&
 				(iter->m_y < boss_bottom)) {
 				B.hp -= weapon->m_attack;
+				cumulative_damage += player.m_weapon->m_attack;
 				iter = weapon->m_bullets.erase(iter);
 
-				if (0 >= B.hp) {
+				if (150 >= B.hp) {
 					change_stage();
 					return;
 				}
@@ -991,9 +1062,10 @@ void bullet_boss_c_collision() {
 			(boss_top < iter->m_y) &&
 			(iter->m_y < boss_bottom)) {
 			C.hp -= player.m_weapon->m_attack;
+			cumulative_damage += player.m_weapon->m_attack;
 			iter = player.m_weapon->m_bullets.erase(iter);
 
-			if (0 >= C.hp) {
+			if (150 >= C.hp) {
 				change_stage();
 				return;
 			}
@@ -1014,9 +1086,10 @@ void bullet_boss_c_collision() {
 				(boss_top < iter->m_y) &&
 				(iter->m_y < boss_bottom)) {
 				C.hp -= weapon->m_attack;
+				cumulative_damage += player.m_weapon->m_attack;
 				iter = weapon->m_bullets.erase(iter);
 
-				if (0 >= C.hp) {
+				if (150 >= C.hp) {
 					change_stage();
 					return;
 				}

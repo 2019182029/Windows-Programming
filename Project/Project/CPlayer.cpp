@@ -27,8 +27,8 @@ void Player::set_velocity(float x_velocity, float y_velocity) {
 	m_y_velocity += y_velocity;
 }
 
-void Player::set_on_ground(const int y_ground) {
-	m_y = y_ground - Bmp_Player[m_anim_state].bmHeight;
+void Player::set_on_ground(const float y_ground) {
+	m_y = y_ground;
 	m_y_velocity = 0.0f;
 
 	m_on_platform = true;

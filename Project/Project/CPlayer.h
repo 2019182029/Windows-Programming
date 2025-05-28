@@ -30,7 +30,7 @@ public:
 	Player();
 
 	void set_velocity(float x_velocity, float y_velocity);
-	void set_on_ground(const int y_ground);
+	void set_on_ground(const float y_ground);
 	void set_on_platform(const POINT& platform);
 
 	void heal(int amount);
