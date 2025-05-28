@@ -18,12 +18,13 @@ public:
 	std::chrono::system_clock::time_point m_rolled_time;
 
 	Weapon* m_weapon;
-	Weapon* m_old_weapon;
+	std::vector<Weapon*> m_old_weapon;
 
 public:
 	Player();
 
 	void set_velocity(float x_velocity, float y_velocity);
+	void set_on_ground(const int y_ground);
 	void set_on_platform(const POINT& platform);
 
 	void move();

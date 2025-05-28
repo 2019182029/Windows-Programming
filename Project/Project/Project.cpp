@@ -8,6 +8,8 @@
 
 //#pragma comment(linker,"/entry:WinMainCRTStartup /subsystem:console")
 
+HWND g_hWnd;
+
 Player player;
 std::vector<Item> items;
 bool key_pressed[256] = { false };
@@ -21,10 +23,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 void worker();
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom);
 bool player_item_collision(const Player& player, const Item& item);
+bool player_portal_collision(const Player& player, Portal& portal);
 bool item_platform_collision(const Item& item, const POINT& platform);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevinstance, LPSTR lpszCmdParam, int nCmdShow) { // WinMain부분에 주석이 일치하지 않는다는 오류는 원래 잘 뜸. 무시해도 됨.
-	HWND hWnd;
 	MSG Message;
 	WNDCLASSEX WndClass;
 	LPCTSTR lpszClass = L"Window Class Name";
@@ -48,12 +50,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevinstance, LPSTR lpszCmdPa
 	// 윈도우 속성을 줄 때 '|' 인 or의 비트 연산자를 활용하여 속성을 주면 된다. WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_HSCROLL | WS_VSCROLL | WS_THICKFRAME 이런 식으로
 	// 인자 순서: 윈도우 클래스 이름, 윈도우 타이틀 이름, 윈도우 스타일, 윈도우 x좌표, 윈도우 y좌표, 윈도우 가로 크기, 윈도우 세로 크기, 부모 윈도우 핸들(부모 없으면 NULL), 윈도우 상단에 붙는 메뉴의 핸들(메뉴 없으면 NULL), WinMain에서 받은 인스턴스 핸들
 	// x는 값이 커질수록 창이 우측으로, y는 값이 커질수록 창이 아래로 내려가게 된다.
-	hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW, 0, 0, 1200, 1000, NULL, (HMENU)NULL, hInstance, NULL);
+	g_hWnd = CreateWindow(lpszClass, lpszWindowName, WS_OVERLAPPEDWINDOW, 0, 0, 1200, 1000, NULL, (HMENU)NULL, hInstance, NULL);
 
 	std::thread worker_thread(worker);
 
-	ShowWindow(hWnd, nCmdShow);
-	UpdateWindow(hWnd);
+	ShowWindow(g_hWnd, nCmdShow);
+	UpdateWindow(g_hWnd);
 	while (GetMessage(&Message, 0, 0, 0)) {
 		TranslateMessage(&Message);
 		DispatchMessage(&Message);
@@ -131,11 +133,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		PortalDC = CreateCompatibleDC(hDC);
 		Pic_Portal = (HBITMAP)LoadImage(g_hinst, _T("portal.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Portal = (HBITMAP)SelectObject(PortalDC, Pic_Portal);
+		GetObject(Pic_Portal, sizeof(BITMAP), &Bmp_Portal);
 
 		// HealDC에 대한 비트맵 생성 및 설정
 		HealDC = CreateCompatibleDC(hDC);
 		Pic_Heal = (HBITMAP)LoadImage(g_hinst, _T("healing_item.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Heal = (HBITMAP)SelectObject(HealDC, Pic_Heal);
+		GetObject(Pic_Heal, sizeof(BITMAP), &Bmp_Heal);
+		items.emplace_back(500.0f, 500.0f, ITEM_TYPE::HEAL);
 
 		// Boss_A_DC에 대한 비트맵 생성 및 설정
 		Boss_A_DC = CreateCompatibleDC(hDC);
@@ -192,8 +197,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 			SelectObject(MapDC, Pic_RelaxMap);
 			StretchBlt(mainDC, 0, 700, rt.right, 300, MapDC, 0, 0, 1200, 300, SRCCOPY); // 맵 하단부에 폭은 맵 가로 최대치에 높이 300 범위에 출력
 			TransparentBlt(mainDC, portal.px(), portal.py(), 100, 100, PortalDC, 0, 0, 100, 100, RGB(255, 255, 255)); // 포탈
-			heal.emplace_back(500, 600);
-			TransparentBlt(mainDC, heal.begin()->h_x(), heal.begin()->h_y(), 50, 50, HealDC, 0, 0, 50, 50, RGB(255, 255, 255)); // 회복 물약
+			//heal.emplace_back(500, 600);
+			//TransparentBlt(mainDC, heal.begin()->h_x(), heal.begin()->h_y(), 50, 50, HealDC, 0, 0, 50, 50, RGB(255, 255, 255)); // 회복 물약
 		}
 
 		// Player
@@ -201,7 +206,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
 		// Item
 		for (const auto& item : items) {
-			item.print(mainDC, WeaponDC);
+			switch (item.m_type) {
+			case ITEM_TYPE::WEAPON:
+				item.print(mainDC, WeaponDC);
+				break;
+
+			case ITEM_TYPE::HEAL:
+				item.print(mainDC, HealDC);
+				break;
+			}
 		}
 
 		// 스테이지 2에 대한 처리
@@ -463,7 +476,7 @@ void worker() {
 		auto current_time = std::chrono::system_clock::now();
 
 		if (16 < std::chrono::duration_cast<std::chrono::milliseconds>(current_time - update_time).count()) {
-			// Player
+			// Player Move
 			float old_player_bottom = player.m_y + Bmp_Player[player.m_anim_state].bmHeight;
 
 			player.update();
@@ -480,9 +493,24 @@ void worker() {
 				player.m_was_rolling = false;
 			}
 
+			// Player - Platform Collision
 			player.m_on_platform = false;
 
 			switch (stage) {
+			case 1:
+			case 3:
+			case 5:
+				if (700 < (player.m_y + Bmp_Player[player.m_anim_state].bmHeight)) {
+					player.set_on_ground(700);
+				}
+
+				if (player_portal_collision(player, portal)) {
+					player.m_x = 250.0f; player.m_y = 50.0f;
+					++stage;
+				}
+				InvalidateRect(g_hWnd, NULL, FALSE);
+				break;
+
 			case 2:
 				for (const auto& platform : A.Platform) {
 					if (player_platform_collision(player, platform, old_player_bottom)) {
@@ -511,12 +539,19 @@ void worker() {
 				break;
 			}
 
-			// Item
+			// Item - Platform Collision
 			for (auto& item : items) {
 				if (item.m_is_falling) {
 					item.update();
 
 					switch (stage) {
+					case 1:
+					case 3:
+					case 5:
+						if (675 < (item.m_y + Bmp_Heal.bmHeight)) {
+							item.m_y = 675 - 50.0f;
+						}
+
 					case 4:
 						for (const auto& platform : B.Platform) {
 							if (item_platform_collision(item, platform)) {
@@ -540,18 +575,20 @@ void worker() {
 				}
 			}
 
+			// Player - Item Collision
 			for (auto iter = items.begin(); iter != items.end();) {
 				if (player_item_collision(player, *iter)) {
-					Weapon* old_weapon = nullptr;
-					if (player.m_weapon) { old_weapon = player.m_weapon; }
-
 					switch (iter->m_type) {
 					case WEAPON:
-						player.m_weapon = new Weapon(iter->m_bmp_index);
+						if (player.m_weapon) { 
+							player.m_old_weapon.emplace_back(player.m_weapon);
+							player.m_weapon = new Weapon(iter->m_bmp_index);
+						}
+						break;
+
+					case HEAL:
 						break;
 					}
-
-					if (old_weapon) { delete old_weapon; }
 
 					iter = items.erase(iter);
 					continue;
@@ -562,8 +599,11 @@ void worker() {
 			update_time = current_time;
 		}
 
+		// Spawn Item
 		if (10 < std::chrono::duration_cast<std::chrono::seconds>(current_time - item_spawn_time).count()) {
-			items.emplace_back(WEAPON);
+			if (1 != (stage % 2)) {
+				items.emplace_back(WEAPON);
+			}
 
 			item_spawn_time = current_time;
 		}
@@ -613,6 +653,26 @@ bool player_item_collision(const Player& player, const Item& item) {
 		(player_bottom > item_top) &&
 		(player_left < item_right) &&
 		(player_right > item_left)) {
+		return true;
+	}
+	return false;
+}
+
+bool player_portal_collision(const Player& player, Portal& portal) {
+	float player_top = player.m_y;
+	float player_bottom = player.m_y + Bmp_Player[player.m_anim_state].bmHeight;
+	float player_left = player.m_x;
+	float player_right = player.m_x + Bmp_Player[player.m_anim_state].bmWidth;
+
+	float portal_top = portal.py();
+	float portal_bottom = portal.py() + 100.0f;
+	float portal_left = portal.px();
+	float portal_right = portal.px() + 100.0f;
+
+	if ((player_top < portal_bottom) &&
+		(player_bottom > portal_top) &&
+		(player_left < portal_right) &&
+		(player_right > portal_left)) {
 		return true;
 	}
 	return false;

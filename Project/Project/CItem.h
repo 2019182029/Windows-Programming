@@ -14,6 +14,7 @@ public:
 
 public:
 	Item(ITEM_TYPE type);
+	Item(float x, float y, ITEM_TYPE type);
 
 	void move();
 	void update();

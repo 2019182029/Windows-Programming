@@ -32,6 +32,7 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="CPlayer.h" />
     <ClInclude Include="CWeapon.h" />
+    <ClInclude Include="Element.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

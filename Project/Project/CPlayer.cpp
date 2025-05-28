@@ -13,13 +13,20 @@ Player::Player() {
 	m_was_rolling = false;
 	m_rolled_time = std::chrono::system_clock::now();
 
-	m_weapon = new Weapon(SHOTGUN);
-	m_old_weapon = nullptr;
+	m_weapon = new Weapon(PISTOL);
 }
 
 void Player::set_velocity(float x_velocity, float y_velocity) {
 	m_x_velocity += x_velocity;
 	m_y_velocity += y_velocity;
+}
+
+void Player::set_on_ground(const int y_ground) {
+	m_y = y_ground - Bmp_Player[m_anim_state].bmHeight;
+	m_y_velocity = 0.0f;
+
+	m_on_platform = true;
+	m_double_jump = true;
 }
 
 void Player::set_on_platform(const POINT& platform) {
@@ -86,7 +93,7 @@ void Player::fire() {
 			m_anim_state);
 
 		if (0 == m_weapon->m_rounds) {
-			m_old_weapon = m_weapon;
+			m_old_weapon.emplace_back(m_weapon);
 			m_weapon = new Weapon(PISTOL);
 		}
 	}
@@ -125,7 +132,7 @@ void Player::update() {
 			--m_weapon->m_burst_count;
 
 			if (0 == m_weapon->m_rounds) {
-				m_old_weapon = m_weapon;
+				m_old_weapon.emplace_back(m_weapon);
 				m_weapon = new Weapon(PISTOL);
 			}
 		}
@@ -133,12 +140,16 @@ void Player::update() {
 		m_weapon->update();
 	}
 
-	if (m_old_weapon) {
-		m_old_weapon->update();
-		
-		if (0 == m_old_weapon->m_bullets.size()) {
-			delete m_old_weapon;
-			m_old_weapon = nullptr;
+	if (!m_old_weapon.empty()) {
+		for (auto iter = m_old_weapon.begin(); iter != m_old_weapon.end();) {
+			(*iter)->update();
+
+			if (0 == (*iter)->m_bullets.size()) {
+				delete (*iter);
+				iter = m_old_weapon.erase(iter);
+				continue;
+			}
+			++iter;
 		}
 	}
 }
@@ -153,7 +164,9 @@ void Player::print(HDC hDC, HDC pDC, HDC bDC) const {
 		m_weapon->print(hDC, bDC);
 	}
 
-	if (m_old_weapon) {
-		m_old_weapon->print(hDC, bDC);
+	if (!m_old_weapon.empty()) {
+		for (const auto& old_weapon : m_old_weapon) {
+			old_weapon->print(hDC, bDC);
+		}
 	}
 }

@@ -70,31 +70,31 @@ Weapon::Weapon(int type) {
 	switch (m_type) {
 	case PISTOL:
 		m_rounds = 0x7FFF'FFFF;
-		m_attack = 1;
+		m_attack = 5;
 
 		m_range = 1200.0f;
 		m_cooldown = 100.0f;
 		break;
 
 	case SMG:
-		m_rounds = 10;
-		m_attack = 1;
+		m_rounds = 30;
+		m_attack = 5;
 
 		m_range = 1200.0f;
 		m_cooldown = 300.0f;
 		break;
 
 	case SHOTGUN:
-		m_rounds = 10;
-		m_attack = 1;
+		m_rounds = 8;
+		m_attack = 5;
 
 		m_range = 600.0f;
 		m_cooldown = 1000.0f;
 		break;
 
 	case SNIPER:
-		m_rounds = 10;
-		m_attack = 1;
+		m_rounds = 3;
+		m_attack = 50;
 
 		m_range = 1200.0f;
 		m_cooldown = 1000.0f;
@@ -113,7 +113,7 @@ void Weapon::fire(int x, int y, int dir) {
 	switch (m_type) {
 	case PISTOL:
 		--m_rounds;
-		m_bullets.emplace_back(x, y, dir);
+		m_bullets.emplace_back(static_cast<float>(x), static_cast<float>(y), dir);
 		break;
 
 	case SMG:
@@ -126,9 +126,9 @@ void Weapon::fire(int x, int y, int dir) {
 		float base_angle;
 
 		switch (dir) {
-		case UP:    base_angle = -M_PI / 2; break;
-		case DOWN:  base_angle = M_PI / 2; break;
-		case LEFT:  base_angle = M_PI; break;
+		case UP:    base_angle = -static_cast<float>(M_PI) / 2;	break;
+		case DOWN:  base_angle = static_cast<float>(M_PI) / 2; break;
+		case LEFT:  base_angle = static_cast<float>(M_PI); break;
 		case RIGHT: base_angle = 0.0f; break;
 		}
 
@@ -136,14 +136,14 @@ void Weapon::fire(int x, int y, int dir) {
 			float spread = 0.05f; 
 			float angle = base_angle + (i * spread);
 
-			m_bullets.emplace_back(x, y, angle);
+			m_bullets.emplace_back(static_cast<float>(x), static_cast<float>(y), angle);
 		}
 		break;
 	}
 
 	case SNIPER:
 		--m_rounds;
-		m_bullets.emplace_back(x, y, dir, 50.0f);
+		m_bullets.emplace_back(static_cast<float>(x), static_cast<float>(y), dir, 50.0f);
 		break;
 	}
 
