@@ -108,6 +108,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		MapDC = CreateCompatibleDC(hDC);
 		Pic_BossMap = (HBITMAP)LoadImage(g_hinst, _T("boss stage.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		Pic_RelaxMap = (HBITMAP)LoadImage(g_hinst, _T("relax stage.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_TutorialMap = (HBITMAP)LoadImage(g_hinst, _T("tutorial stage.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_BossMap = (HBITMAP)SelectObject(MapDC, Pic_BossMap);
 
 		// PlayerDC에 대한 비트맵 생성 및 설정
@@ -210,11 +211,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		}
 		else {
 			// 휴식 공간
+			if (stage == 1) { // 맨 처음 스테이지일 경우
+				SelectObject(MapDC, Pic_TutorialMap);
+				StretchBlt(mainDC, 0, 0, rt.right, 700, MapDC, 0, 0, 1200, 700, SRCCOPY);
+			}
 			SelectObject(MapDC, Pic_RelaxMap);
 			StretchBlt(mainDC, 0, 700, rt.right, 300, MapDC, 0, 0, 1200, 300, SRCCOPY); // 맵 하단부에 폭은 맵 가로 최대치에 높이 300 범위에 출력
 			TransparentBlt(mainDC, portal.px(), portal.py(), 100, 100, PortalDC, 0, 0, 100, 100, RGB(255, 255, 255)); // 포탈
-			//heal.emplace_back(500, 600);
-			//TransparentBlt(mainDC, heal.begin()->h_x(), heal.begin()->h_y(), 50, 50, HealDC, 0, 0, 50, 50, RGB(255, 255, 255)); // 회복 물약
 		}
 
 		// Player

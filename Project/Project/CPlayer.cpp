@@ -1,8 +1,8 @@
 #include "CPlayer.h"
 
 Player::Player() {
-	m_hp = 10;
-	m_max_hp = 10;
+	m_hp = 5;
+	m_max_hp = 5;
 	m_visible = true;
 	m_invincible = false;
 	m_invincible_time = std::chrono::system_clock::now();

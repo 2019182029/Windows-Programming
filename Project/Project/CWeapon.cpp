@@ -73,7 +73,7 @@ Weapon::Weapon(int type) {
 		m_attack = 5;
 
 		m_range = 1200.0f;
-		m_cooldown = 100.0f;
+		m_cooldown = 150.0f;
 		break;
 
 	case SMG:
@@ -87,8 +87,9 @@ Weapon::Weapon(int type) {
 	case SHOTGUN:
 		m_rounds = 8;
 		m_attack = 50;
+		// 나중에 공격력 10으로 변경 (지금은 테스트 용으로 공격력 높여두기)
 
-		m_range = 600.0f;
+		m_range = 300.0f;
 		m_cooldown = 1000.0f;
 		break;
 

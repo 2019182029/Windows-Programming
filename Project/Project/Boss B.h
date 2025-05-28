@@ -185,13 +185,6 @@ public:
 			}
 		}
 	}
-	// 회복 아이템 생성 (플레이어 공격과 상호작용 하는 과정에서 호출)
-	void make_heal() {
-		std::uniform_int_distribution<int> ran{ 1, 4 };
-		if (hp < 1000 and hp % 250 == 0) {
-			//heal.emplace_back(Platform[ran(dre)].x + 100, Platform[ran(dre)].y - 50);
-		}
-	}
 	// 보스 클리어
 	void next_stage() {
 		if (hp <= 0) {
@@ -224,7 +217,6 @@ public:
 		// 보스 체력바 출력
 		SelectObject(mainDC, red_Brush);
 		Rectangle(mainDC, 150, 900, hp, 950);
-		//next_stage();
 	}
 };
 Boss_B B(4, 1000); // 방향과 보스의 체력을 생성자의 인자로 줌
