@@ -86,7 +86,7 @@ Weapon::Weapon(int type) {
 
 	case SHOTGUN:
 		m_rounds = 8;
-		m_attack = 5;
+		m_attack = 500;
 
 		m_range = 600.0f;
 		m_cooldown = 1000.0f;

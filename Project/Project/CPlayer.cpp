@@ -3,6 +3,9 @@
 Player::Player() {
 	m_hp = 10;
 	m_max_hp = 10;
+	m_visible = true;
+	m_invincible = false;
+	m_invincible_time = std::chrono::system_clock::now();
 
 	m_x = 250.0f; m_y = 0.0f;
 	m_x_velocity = 0.0f; m_y_velocity = 0.0f;
@@ -42,6 +45,12 @@ void Player::set_on_platform(const POINT& platform) {
 
 void Player::heal(int amount) {
 	m_hp = min(m_hp + amount, m_max_hp);
+}
+
+void Player::damaged() {
+	m_hp = max(m_hp - 1, 0);
+	m_invincible = true;
+	m_invincible_time = std::chrono::system_clock::now();
 }
 
 void Player::move() {
@@ -107,6 +116,18 @@ void Player::fire() {
 }
 
 void Player::update() {
+	// Invincible
+	if (m_invincible) {
+		auto now = std::chrono::system_clock::now();
+
+		if (1000 < std::chrono::duration_cast<std::chrono::milliseconds>(now - m_invincible_time).count()) {
+			m_visible = true;
+			m_invincible = false;
+		} else {
+			m_visible = !m_visible;
+		}
+	}
+
 	// Roll
 	if (m_is_rolling) {
 		m_x_velocity *= 0.95f;
@@ -162,9 +183,11 @@ void Player::update() {
 }
 
 void Player::print(HDC hDC, HDC pDC, HDC bDC) const {
-	SelectObject(pDC, Pic_Player[m_anim_state]);
-	TransparentBlt(hDC, static_cast<int>(m_x), static_cast<int>(m_y), Bmp_Player[m_anim_state].bmWidth, Bmp_Player[m_anim_state].bmHeight,
-		pDC, 0, 0, Bmp_Player[m_anim_state].bmWidth, Bmp_Player[m_anim_state].bmHeight, RGB(255, 255, 255));
+	if (m_visible) {
+		SelectObject(pDC, Pic_Player[m_anim_state]);
+		TransparentBlt(hDC, static_cast<int>(m_x), static_cast<int>(m_y), Bmp_Player[m_anim_state].bmWidth, Bmp_Player[m_anim_state].bmHeight,
+			pDC, 0, 0, Bmp_Player[m_anim_state].bmWidth, Bmp_Player[m_anim_state].bmHeight, RGB(255, 255, 255));
+	}
 
 	// Weapon
 	if (m_weapon) {
@@ -193,7 +216,7 @@ void Player::print(HDC hDC, HDC pDC, HDC bDC) const {
 		RECT Rect = { 5, 30, 50, 50 };
 		std::wstring Text;
 
-		if (m_weapon->m_rounds > 30) {
+		if (m_weapon->m_type == PISTOL) {
 			Text = L"¡Ä";
 		}
 		else {

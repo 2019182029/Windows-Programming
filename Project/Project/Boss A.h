@@ -162,10 +162,10 @@ public:
 		// 보스 체력바 출력
 		SelectObject(mainDC, red_Brush);
 		Rectangle(mainDC, 150, 900, hp, 950);
-		// 체력 물약
-		for (auto it = heal.begin(); it != heal.end(); ++it) {
-			TransparentBlt(mainDC, it->h_x(), it->h_y(), 50, 50, HealDC, 0, 0, 50, 50, RGB(255, 255, 255));
-		}
+		//// 체력 물약
+		//for (auto it = heal.begin(); it != heal.end(); ++it) {
+		//	TransparentBlt(mainDC, it->h_x(), it->h_y(), 50, 50, HealDC, 0, 0, 50, 50, RGB(255, 255, 255));
+		//}
 		next_stage();
 	}
 };

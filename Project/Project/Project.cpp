@@ -21,12 +21,16 @@ auto item_spawn_time = std::chrono::system_clock::now();
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
 void worker();
+void change_stage();
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom);
 bool player_item_collision(const Player& player, const Item& item);
 bool player_portal_collision(const Player& player, const Portal& portal);
-bool player_boss_a_collision(const Player& player, const Boss_A& boss);
-bool player_boss_b_collision(const Player& player, const Boss_B& boss);
-bool player_boss_c_collision(const Player& player, const Boss_C& boss);
+void player_boss_a_collision();
+void player_boss_b_collision();
+void player_boss_c_collision();
+void bullet_boss_a_collision();
+void bullet_boss_b_collision();
+void bullet_boss_c_collision();
 bool item_platform_collision(const Item& item, const POINT& platform);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevinstance, LPSTR lpszCmdParam, int nCmdShow) { // WinMain부분에 주석이 일치하지 않는다는 오류는 원래 잘 뜸. 무시해도 됨.
@@ -143,7 +147,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		Pic_Heal = (HBITMAP)LoadImage(g_hinst, _T("healing_item.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Heal = (HBITMAP)SelectObject(HealDC, Pic_Heal);
 		GetObject(Pic_Heal, sizeof(BITMAP), &Bmp_Heal);
-		items.emplace_back(500.0f, 500.0f, ITEM_TYPE::HEAL);
 
 		// Boss_A_DC에 대한 비트맵 생성 및 설정
 		Boss_A_DC = CreateCompatibleDC(hDC);
@@ -496,7 +499,7 @@ void worker() {
 				player.m_was_rolling = false;
 			}
 
-			// Player - Platform Collision
+			// Player Collision
 			player.m_on_platform = false;
 
 			switch (stage) {
@@ -509,7 +512,8 @@ void worker() {
 
 				if (player_portal_collision(player, portal)) {
 					player.m_x = 250.0f; player.m_y = 50.0f;
-					stage = 4;
+					items.clear();
+					++stage;
 				}
 				InvalidateRect(g_hWnd, NULL, FALSE);
 				break;
@@ -530,6 +534,9 @@ void worker() {
 						break;
 					}
 				}
+
+				player_boss_b_collision();
+				bullet_boss_b_collision();
 				break;
 
 			case 6:
@@ -542,7 +549,7 @@ void worker() {
 				break;
 			}
 
-			// Item - Platform Collision
+			// Item Collision
 			for (auto& item : items) {
 				if (item.m_is_falling) {
 					item.update();
@@ -614,6 +621,21 @@ void worker() {
 	}
 }
 
+void change_stage() {
+	player.m_x = 250.0f; player.m_y = 50.0f;
+
+	player.m_weapon->m_bullets.clear();
+	for (auto& weapon : player.m_old_weapon) {
+		delete weapon;
+	}
+	player.m_old_weapon.clear();
+
+	items.clear();
+	items.emplace_back(500.0f, 500.0f, ITEM_TYPE::HEAL);
+
+	++stage;
+}
+
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom) {
 	if (0.0f > player.m_y_velocity) {
 		return false;
@@ -668,9 +690,9 @@ bool player_portal_collision(const Player& player, const Portal& portal) {
 	float player_left = player.m_x;
 	float player_right = player.m_x + Bmp_Player[player.m_anim_state].bmWidth;
 
-	float portal_top = portal.py();
+	float portal_top = static_cast<float>(portal.py());
 	float portal_bottom = portal.py() + 100.0f;
-	float portal_left = portal.px();
+	float portal_left = static_cast<float>(portal.px());
 	float portal_right = portal.px() + 100.0f;
 
 	if ((player_top < portal_bottom) &&
@@ -682,16 +704,127 @@ bool player_portal_collision(const Player& player, const Portal& portal) {
 	return false;
 }
 
-bool player_boss_a_collision(const Player& player, const Boss_A& boss) {
-	return false;
+void player_boss_a_collision() {
 }
 
-bool player_boss_b_collision(const Player& player, const Boss_B& boss) {
-	return false;
+void player_boss_b_collision() {
+	if (player.m_invincible) { 
+		return; 
+	}
+
+	float player_top = player.m_y;
+	float player_bottom = player.m_y + Bmp_Player[player.m_anim_state].bmHeight;
+	float player_left = player.m_x;
+	float player_right = player.m_x + Bmp_Player[player.m_anim_state].bmWidth;
+
+	float boss_top, boss_bottom, boss_left, boss_right;
+	if (B.b_direct() == 1 || B.b_direct() == 2) {
+		boss_top = static_cast<float>(B.b_y());
+		boss_bottom = B.b_y() + 100.0f;
+		boss_left = static_cast<float>(B.b_x());
+		boss_right = B.b_x() + 1000.0f;
+	} else {
+		boss_top = static_cast<float>(B.b_y());
+		boss_bottom = B.b_y() + 800.0f;
+		boss_left = static_cast<float>(B.b_x());
+		boss_right = B.b_x() + 100.0f;
+	}
+
+	// Player - Boss Collision
+	if ((player_top < boss_bottom) &&
+		(player_bottom > boss_top) &&
+		(player_left < boss_right) &&
+		(player_right > boss_left)) {
+		player.damaged();
+		return;
+	}
+
+	// Player - Attack Collision
+	for (auto& attack : B.attack) {
+		POINT* P = attack.a_Point();
+		float attack_top = static_cast<float>(min(min(P[0].y, P[1].y), P[2].y));
+		float attack_bottom = static_cast<float>(max(max(P[0].y, P[1].y), P[2].y));
+		float attack_left = static_cast<float>(min(min(P[0].x, P[1].x), P[2].x));
+		float attack_right = static_cast<float>(max(max(P[0].x, P[1].x), P[2].x));
+
+		if ((player_top < attack_bottom) &&
+			(player_bottom > attack_top) &&
+			(player_left < attack_right) &&
+			(player_right > attack_left)) {
+			player.damaged();
+			return;
+		}
+	}
 }
 
-bool player_boss_c_collision(const Player& player, const Boss_C& boss) {
-	return false;
+void player_boss_c_collision() {
+}
+
+void bullet_boss_a_collision() {
+}
+
+void bullet_boss_b_collision() {
+	float boss_top, boss_bottom, boss_left, boss_right;
+	if (B.b_direct() == 1 || B.b_direct() == 2) {
+		boss_top = static_cast<float>(B.b_y());
+		boss_bottom = B.b_y() + 100.0f;
+		boss_left = static_cast<float>(B.b_x());
+		boss_right = B.b_x() + 1000.0f;
+	}
+	else {
+		boss_top = static_cast<float>(B.b_y());
+		boss_bottom = B.b_y() + 800.0f;
+		boss_left = static_cast<float>(B.b_x());
+		boss_right = B.b_x() + 100.0f;
+	}
+
+	for (auto iter = player.m_weapon->m_bullets.begin(); iter != player.m_weapon->m_bullets.end();) {
+		if ((boss_left < iter->m_x) &&
+			(iter->m_x < boss_right) &&
+			(boss_top < iter->m_y) &&
+			(iter->m_y < boss_bottom)) {
+			B.hp -= player.m_weapon->m_attack;
+			iter = player.m_weapon->m_bullets.erase(iter);
+
+			if (0 == (B.hp % 250)) {
+				if (0 == B.hp) {
+					change_stage();
+					return;
+				} else {
+					items.emplace_back(500.0f, 500.0f, ITEM_TYPE::HEAL);
+				}
+			}
+			continue;
+		}
+		++iter;
+	}
+
+	for (auto weapon : player.m_old_weapon) {
+		for (auto iter = weapon->m_bullets.begin(); iter != weapon->m_bullets.end();) {
+			if ((boss_left < iter->m_x) &&
+				(iter->m_x < boss_right) &&
+				(boss_top < iter->m_y) &&
+				(iter->m_y < boss_bottom)) {
+				B.hp -= weapon->m_attack;
+				iter = weapon->m_bullets.erase(iter);
+
+				if (0 == (B.hp % 250)) {
+					if (0 == B.hp) {
+						change_stage();
+						return;
+					}
+					else {
+						items.emplace_back(500.0f, 500.0f, ITEM_TYPE::HEAL);
+					}
+				}
+				continue;
+			}
+			++iter;
+		}
+	}
+}
+
+void bullet_boss_c_collision() {
 }
 
 bool item_platform_collision(const Item& item, const POINT& platform) {

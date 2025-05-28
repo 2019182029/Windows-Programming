@@ -24,7 +24,7 @@ public:
 	int m_type;
 
 	int m_rounds;
-	float m_attack;
+	int m_attack;
 
 	float m_range;
 	float m_cooldown;

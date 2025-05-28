@@ -21,4 +21,4 @@ HBRUSH red_Brush, blue_Brush, lightgray_Brush, old_Brush;
 
 RECT rt;
 
-int stage = 1;
+int stage = 3;
