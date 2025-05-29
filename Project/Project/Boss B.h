@@ -191,6 +191,14 @@ public:
 			stage++;
 		}
 	}
+	// 리셋
+	void reset() {
+		direct = 4;
+		b_pos();
+		hp = 1000;
+		count = 0;
+		attack.clear();
+	}
 	// 출력
 	void print_stage4() {
 		// 보스 출력
@@ -210,13 +218,14 @@ public:
 			StretchBlt(mainDC, Platform[i].x, Platform[i].y, 200, 15, PlatformDC, 0, 0, 200, 15, SRCCOPY);
 		}
 		// 공격 출력
+		HBRUSH oldBrush = (HBRUSH)SelectObject(mainDC, lightgray_Brush);
 		for (auto it = attack.begin(); it != attack.end(); ++it) {
-			SelectObject(mainDC, lightgray_Brush);
 			Polygon(mainDC, it->a_Point(), 3);
 		}
 		// 보스 체력바 출력
 		SelectObject(mainDC, red_Brush);
 		Rectangle(mainDC, 150, 900, hp, 950);
+		SelectObject(mainDC, oldBrush);
 	}
 };
 Boss_B B(4, 1000); // 방향과 보스의 체력을 생성자의 인자로 줌

@@ -9,11 +9,15 @@ public:
 
 	float m_distance;
 
+	bool m_hit;
+	std::chrono::system_clock::time_point m_hit_time;
+
 public:
 	Bullet();
 	Bullet(float x, float y, int dir, float speed = 10.0f);
 	Bullet(float x, float y, float angle);
 
+	void hit();
 	void move();
 	void update();
 	void print(HDC hDC, HDC bDC) const;

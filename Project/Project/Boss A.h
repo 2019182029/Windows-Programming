@@ -141,20 +141,29 @@ public:
 			stage++;
 		}
 	}
+	// 리셋
+	void reset() {
+		x = 1025;
+		y = 200;
+		hp = 1000;
+		attack.clear();
+	}
 	// 출력
 	void print_stage2() {
 		for (int i = 0; i < 4; i++) {
 			StretchBlt(mainDC, Platform[i].x, Platform[i].y, 200, 15, PlatformDC, 0, 0, 200, 15, SRCCOPY);
 		}
-		SelectObject(mainDC, lightgray_Brush);
+		HBRUSH oldBrush = (HBRUSH)SelectObject(mainDC, lightgray_Brush);
 		for (auto it = attack.begin(); it != attack.end(); ++it) {
 			Polygon(mainDC, it->a_point(), 3);
 		}
 		SelectObject(Boss_A_DC, Pic_Boss_A[Boss_A_ani]);
 		TransparentBlt(mainDC, x, y, 100, 600, Boss_A_DC, 0, 0, 100, 600, RGB(255, 255, 255));
+
 		// 보스 체력바 출력
 		SelectObject(mainDC, red_Brush);
 		Rectangle(mainDC, 150, 900, hp, 950);
+		SelectObject(mainDC, oldBrush);
 	}
 };
 Boss_A A(1025, 200, 1000);

@@ -114,14 +114,21 @@ public:
 			stage++;
 		}
 	}
+	// 리셋
+	void reset() {
+		x = 600;
+		y = 450;
+		direct = 1;
+		hp = 1000;
+	}
 	// 출력
 	void print_stage6() {
 		int size = 20; // 구체 크기
 		for (int i = 0; i < 4; i++) {
 			StretchBlt(mainDC, Platform[i].x, Platform[i].y, 200, 15, PlatformDC, 0, 0, 200, 15, SRCCOPY);
 		}
+		HBRUSH oldBrush = (HBRUSH)SelectObject(mainDC, blue_Brush);
 		for (auto it = attack.begin(); it != attack.end(); ++it) {
-			SelectObject(mainDC, blue_Brush);
 			Ellipse(mainDC, it->ax() - size, it->ay() - size, it->ax() + size, it->ay() + size);
 		}
 		SelectObject(Boss_C_DC, Pic_Boss_C[Boss_C_ani]);
@@ -129,6 +136,7 @@ public:
 		// 보스 체력바 출력
 		SelectObject(mainDC, red_Brush);
 		Rectangle(mainDC, 150, 900, hp, 950);
+		SelectObject(mainDC, oldBrush);
 	}
 };
 Boss_C C(600, 450, 1, 1000);

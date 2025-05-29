@@ -40,6 +40,7 @@ public:
 	void jump();
 	void roll();
 	void fire();
+	void reset();
 	void update();
 	void print(HDC hDC, HDC pDC, HDC bDC) const;
 };

@@ -115,6 +115,36 @@ void Player::fire() {
 	}
 }
 
+void Player::reset() {
+	m_hp = m_max_hp;
+	m_visible = true;
+	m_invincible = false;
+
+	m_x = 250.0f;
+	m_y = 200.0f;
+	m_x_velocity = 0.0f;
+	m_y_velocity = 0.0f;
+
+	m_anim_state = IDLE;
+
+	m_on_platform = true;
+	m_double_jump = true;
+
+	m_is_rolling = false;
+	m_was_rolling = false;
+
+	Weapon* old_weapon = m_weapon;
+	m_weapon->m_bullets.clear();
+	m_weapon = new Weapon(SHOTGUN);
+	delete old_weapon;
+
+	for (auto& weapon : m_old_weapon) {
+		weapon->m_bullets.clear();
+		delete weapon;
+	}
+	m_old_weapon.clear();
+}
+
 void Player::update() {
 	// Invincible
 	if (m_invincible) {
@@ -228,11 +258,14 @@ void Player::print(HDC hDC, HDC pDC, HDC bDC) const {
 		DrawText(hDC, Text.c_str(), -1, &Rect, DT_RIGHT | DT_BOTTOM | DT_SINGLELINE);
 	}
 
+	DeleteObject(hPen);
+	DeleteObject(hBrush);
+
 	// UI - Player
 	hPen = CreatePen(PS_SOLID, 2, RGB(0, 0, 0));
-	oldPen = (HPEN)SelectObject(hDC, hPen);
+	SelectObject(hDC, hPen);
 	hBrush = CreateSolidBrush(RGB(255, 0, 0));
-	oldBrush = (HBRUSH)SelectObject(hDC, hBrush);
+	SelectObject(hDC, hBrush);
 
 	for (int i = 0; i < m_hp; ++i) {
 		Rectangle(hDC, 60 + 25 * i, 5, 

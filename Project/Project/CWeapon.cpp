@@ -7,6 +7,9 @@ Bullet::Bullet() {
 	m_x_velocity = 0.0f; m_y_velocity = 0.0f;
 
 	m_distance = 0.0f;
+
+	m_hit = false;
+	m_hit_time = std::chrono::system_clock::now();
 }
 
 Bullet::Bullet(float x, float y, int dir, float speed) : m_x(x), m_y(y) {
@@ -33,6 +36,9 @@ Bullet::Bullet(float x, float y, int dir, float speed) : m_x(x), m_y(y) {
 	}
 
 	m_distance = 0.0f;
+
+	m_hit = false;
+	m_hit_time = std::chrono::system_clock::now();
 }
 
 Bullet::Bullet(float x, float y, float angle) : m_x(x), m_y(y) {
@@ -42,24 +48,40 @@ Bullet::Bullet(float x, float y, float angle) : m_x(x), m_y(y) {
 	m_y_velocity = sinf(angle) * speed;
 
 	m_distance = 0.0f;
+
+	m_hit = false;
+	m_hit_time = std::chrono::system_clock::now();
+}
+
+void Bullet::hit() {
+	m_hit = true;
+	m_hit_time = std::chrono::system_clock::now();
 }
 
 void Bullet::move() {
 	m_x += m_x_velocity;
 	m_y += m_y_velocity;
 
-	m_distance += m_x_velocity;
-	m_distance += m_y_velocity;
+	m_distance += abs(m_x_velocity);
+	m_distance += abs(m_y_velocity);
 }
 
 void Bullet::update() {
-	move();
+	if (!m_hit) {
+		move();
+	}
 }
 
 void Bullet::print(HDC hDC, HDC bDC) const {
-	SelectObject(bDC, Pic_Bullet);
-	TransparentBlt(hDC, static_cast<int>(m_x), static_cast<int>(m_y), 10, 10,
-		bDC, 0, 0, Bmp_Bullet.bmWidth, Bmp_Bullet.bmHeight, RGB(255, 255, 255));
+	if (!m_hit) {
+		SelectObject(bDC, Pic_Bullet);
+		TransparentBlt(hDC, static_cast<int>(m_x), static_cast<int>(m_y), 10, 10,
+			bDC, 0, 0, Bmp_Bullet.bmWidth, Bmp_Bullet.bmHeight, RGB(255, 255, 255));
+	} else {
+		SelectObject(DamageDC, Pic_Damage);
+		TransparentBlt(hDC, static_cast<int>(m_x) - 10, static_cast<int>(m_y) - 10, 20, 20,
+			DamageDC, 0, 0, Bmp_Damage.bmWidth, Bmp_Damage.bmHeight, RGB(255, 255, 255));
+	}
 }
 
 //////////////////////////////////////////////////
@@ -86,7 +108,7 @@ Weapon::Weapon(int type) {
 
 	case SHOTGUN:
 		m_rounds = 8;
-		m_attack = 50;
+		m_attack = 100;
 		// 나중에 공격력 10으로 변경 (지금은 테스트 용으로 공격력 높여두기)
 
 		m_range = 300.0f;
@@ -152,10 +174,14 @@ void Weapon::fire(int x, int y, int dir) {
 }
 
 void Weapon::update() {
+	auto current_time = std::chrono::system_clock::now();
+
 	for (auto iter = m_bullets.begin(); iter != m_bullets.end();) {
 		iter->update();
 
-		if (iter->m_distance >= m_range) {
+		if ((iter->m_distance >= m_range) ||
+			(iter->m_hit && 
+				100 < std::chrono::duration_cast<std::chrono::milliseconds>(current_time - iter->m_hit_time).count())) {
 			iter = m_bullets.erase(iter);
 			continue;
 		}

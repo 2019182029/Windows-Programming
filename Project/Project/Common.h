@@ -56,10 +56,12 @@ extern HDC BulletDC;  // 총알 DC
 extern HDC PlatformDC; // 발판 DC
 extern HDC PortalDC; // 포탈
 extern HDC HealDC; // 회복
-extern HBITMAP hBitmap, Pic_BossMap, Pic_RelaxMap, Pic_TutorialMap, Pic_Player[6], Pic_Platform, Pic_Weapon[4], Pic_Bullet, Pic_Portal, Pic_Heal;
-extern BITMAP Bmp_Player[6], Bmp_Platform, Bmp_Weapon[4], Bmp_Bullet, Bmp_Portal, Bmp_Heal;
+extern HDC DamageDC; // 데미지
 
-extern HBITMAP old_hBitmap, old_Pic_BossMap, old_Pic_Player, old_Pic_Platform, old_Pic_Weapon, old_Pic_Bullet, old_Pic_Portal, old_Pic_Heal;  // 이전 비트맵 정보 저장 (안전한 제거 용도)
+extern HBITMAP hBitmap, Pic_BossMap, Pic_RelaxMap, Pic_TutorialMap, Pic_Player[6], Pic_Platform, Pic_Weapon[4], Pic_Bullet, Pic_Portal, Pic_Heal, Pic_Damage;
+extern BITMAP Bmp_Player[6], Bmp_Platform, Bmp_Weapon[4], Bmp_Bullet, Bmp_Portal, Bmp_Heal, Bmp_Damage;
+
+extern HBITMAP old_hBitmap, old_Pic_BossMap, old_Pic_Player, old_Pic_Platform, old_Pic_Weapon, old_Pic_Bullet, old_Pic_Portal, old_Pic_Heal, old_Pic_Damage;  // 이전 비트맵 정보 저장 (안전한 제거 용도)
 
 extern HBRUSH red_Brush, blue_Brush, lightgray_Brush, old_Brush;
 

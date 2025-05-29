@@ -24,6 +24,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
 void worker();
 void change_stage();
+void reset();
 
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom);
 
@@ -41,6 +42,7 @@ void bullet_boss_a_collision();
 void bullet_boss_b_collision();
 void bullet_boss_c_collision();
 
+void item_map_collision();
 bool item_platform_collision(const Item& item, const POINT& platform);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevinstance, LPSTR lpszCmdParam, int nCmdShow) { // WinMain부분에 주석이 일치하지 않는다는 오류는 원래 잘 뜸. 무시해도 됨.
@@ -147,6 +149,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		old_Pic_Bullet = (HBITMAP)SelectObject(BulletDC, Pic_Bullet);
 		GetObject(Pic_Bullet, sizeof(BITMAP), &Bmp_Bullet);
 
+		DamageDC = CreateCompatibleDC(hDC);
+		Pic_Damage = (HBITMAP)LoadImage(g_hinst, _T("Damage Effect.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		old_Pic_Damage = (HBITMAP)SelectObject(DamageDC, Pic_Damage);
+		GetObject(Pic_Damage, sizeof(BITMAP), &Bmp_Damage);
+
 		// PortalDC에 대한 비트맵 생성 및 설정
 		PortalDC = CreateCompatibleDC(hDC);
 		Pic_Portal = (HBITMAP)LoadImage(g_hinst, _T("portal.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
@@ -202,8 +209,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
 	case WM_PAINT: {
 		hDC = BeginPaint(hWnd, &ps);
-		old_Brush = (HBRUSH)SelectObject(hDC, red_Brush); // 기본 브러시 저장
+
 		FillRect(mainDC, &rt, (HBRUSH)GetStockObject(WHITE_BRUSH)); // 최종 화면 지워서(하얀 사각형으로 덮어씌워서) 최신화
+
 		if (stage % 2 == 0) { // 짝수는 보스맵이, 홀수는 휴식 공간이 출력됨
 			// 보스맵
 			SelectObject(MapDC, Pic_BossMap);
@@ -276,6 +284,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		}
 
 		BitBlt(hDC, 0, 0, rt.right, rt.bottom, mainDC, 0, 0, SRCCOPY);
+
 		EndPaint(hWnd, &ps);
 		break;
 	}
@@ -439,12 +448,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 		SelectObject(BulletDC, old_Pic_Bullet);
 		SelectObject(PortalDC, old_Pic_Portal);
 		SelectObject(HealDC, old_Pic_Heal);
+		SelectObject(DamageDC, old_Pic_Damage);
 
 		// 브러시 초기화
 		SelectObject(mainDC, old_Brush);
 		DeleteObject(red_Brush);
 		DeleteObject(blue_Brush);
 		DeleteObject(lightgray_Brush);
+
 		// 생성한 DC 및 비트맵 삭제
 		DeleteDC(mainDC);
 		DeleteDC(MapDC);
@@ -466,6 +477,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 			DeleteObject(Pic_Weapon[i]);
 		}
 		DeleteObject(Pic_Bullet);
+		DeleteObject(Pic_Damage);
 		DeleteObject(Pic_Player);
 		DeleteObject(Pic_Platform);
 		DeleteObject(Pic_Portal);
@@ -599,6 +611,8 @@ void worker() {
 								break;
 							}
 						}
+
+						item_map_collision();
 						break;
 
 					case 4:
@@ -609,6 +623,8 @@ void worker() {
 								break;
 							}
 						}
+
+						item_map_collision();
 						break;
 
 					case 6:
@@ -619,6 +635,8 @@ void worker() {
 								break;
 							}
 						}
+						
+						item_map_collision();
 						break;
 					}
 				}
@@ -652,12 +670,12 @@ void worker() {
 		}
 
 		// Spawn Item
-		if (10 < std::chrono::duration_cast<std::chrono::seconds>(current_time - item_spawn_time).count()) {
-			if (1 != (stage % 2)) {
+		if (1 != (stage % 2)) {
+			if (10 < std::chrono::duration_cast<std::chrono::seconds>(current_time - item_spawn_time).count()) {
 				items.emplace_back(WEAPON);
-			}
 
-			item_spawn_time = current_time;
+				item_spawn_time = current_time;
+			}
 		}
 	}
 }
@@ -667,6 +685,7 @@ void change_stage() {
 
 	player.m_weapon->m_bullets.clear();
 	for (auto& weapon : player.m_old_weapon) {
+		weapon->m_bullets.clear();
 		delete weapon;
 	}
 	player.m_old_weapon.clear();
@@ -678,10 +697,23 @@ void change_stage() {
 
 	++stage;
 
-	// 마지막 보스를 클리어 했을 시 승리했음을 나타내는 메시지 박스 띄움
-	if (stage == 7) {
-		MessageBox(g_hWnd, _T("승리!"), _T("정보"), MB_OK);
+	if (7 == stage) {
+		reset();
 	}
+}
+
+void reset() {
+	player.reset();
+
+	items.clear();
+
+	cumulative_damage = 0;
+
+	stage = 1;
+
+	A.reset();
+	B.reset();
+	C.reset();
 }
 
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom) {
@@ -778,6 +810,10 @@ void player_thorn_collision() {
 
 	if (rt.bottom - 65.0f < player_bottom) {
 		player.damaged();
+		if (0 == player.m_hp) {
+			reset();
+			return;
+		}
 		player.m_y_velocity = -19.8f;
 		player.m_double_jump = true;
 		return;
@@ -787,6 +823,10 @@ void player_thorn_collision() {
 		(50.0f > player_left) || 
 		(rt.right - 50.0f < player_right)) {
 		player.damaged();
+		if (0 == player.m_hp) {
+			reset();
+			return;
+		}
 		player.m_double_jump = true;
 		return;
 	}
@@ -813,6 +853,9 @@ void player_boss_a_collision() {
 		(player_left < boss_right) &&
 		(player_right > boss_left)) {
 		player.damaged();
+		if (0 == player.m_hp) {
+			reset();
+		}
 		return;
 	}
 
@@ -831,6 +874,9 @@ void player_boss_a_collision() {
 			(player_left < attack_right) &&
 			(player_right > attack_left)) {
 			player.damaged();
+			if (0 == player.m_hp) {
+				reset();
+			}
 			return;
 		}
 	}
@@ -866,6 +912,9 @@ void player_boss_b_collision() {
 		(player_left < boss_right) &&
 		(player_right > boss_left)) {
 		player.damaged();
+		if (0 == player.m_hp) {
+			reset();
+		}
 		return;
 	}
 
@@ -883,6 +932,9 @@ void player_boss_b_collision() {
 			(player_left < attack_right) &&
 			(player_right > attack_left)) {
 			player.damaged();
+			if (0 == player.m_hp) {
+				reset();
+			}
 			return;
 		}
 	}
@@ -909,6 +961,9 @@ void player_boss_c_collision() {
 		(player_left < boss_right) &&
 		(player_right > boss_left)) {
 		player.damaged();
+		if (0 == player.m_hp) {
+			reset();
+		}
 		return;
 	}
 
@@ -925,13 +980,38 @@ void player_boss_c_collision() {
 			(player_left < attack_right) &&
 			(player_right > attack_left)) {
 			player.damaged();
+			if (0 == player.m_hp) {
+				reset();
+			}
 			return;
 		}
 	}
 }
 
 void bullet_map_collision() {
+	for (auto iter = player.m_weapon->m_bullets.begin(); iter != player.m_weapon->m_bullets.end();) {
+		if ((30.0f > iter->m_y) || 
+			(rt.bottom - 30.0f < iter->m_y) ||
+			(20.0f > iter->m_x) ||
+			(rt.right - 20.0f < iter->m_x)) {
+			iter = player.m_weapon->m_bullets.erase(iter);
+			continue;
+		}
+		++iter;
+	}
 
+	for (auto weapon : player.m_old_weapon) {
+		for (auto iter = weapon->m_bullets.begin(); iter != weapon->m_bullets.end();) {
+			if ((30.0f > iter->m_y) ||
+				(rt.bottom - 30.0f < iter->m_y) ||
+				(20.0f > iter->m_x) ||
+				(rt.right - 20.0f < iter->m_x)) {
+				iter = weapon->m_bullets.erase(iter);
+				continue;
+			}
+			++iter;
+		}
+	}
 }
 
 void bullet_boss_a_collision() {
@@ -941,13 +1021,18 @@ void bullet_boss_a_collision() {
 	float boss_right = A.x + 100.0f;
 
 	for (auto iter = player.m_weapon->m_bullets.begin(); iter != player.m_weapon->m_bullets.end();) {
+		if (iter->m_hit) {
+			++iter;
+			continue;
+		}
+
 		if ((boss_left < iter->m_x) &&
 			(iter->m_x < boss_right) &&
 			(boss_top < iter->m_y) &&
 			(iter->m_y < boss_bottom)) {
 			A.hp -= player.m_weapon->m_attack;
 			cumulative_damage += player.m_weapon->m_attack;
-			iter = player.m_weapon->m_bullets.erase(iter);
+			iter->hit();
 
 			if (150 >= A.hp) {
 				change_stage();
@@ -965,13 +1050,18 @@ void bullet_boss_a_collision() {
 
 	for (auto weapon : player.m_old_weapon) {
 		for (auto iter = weapon->m_bullets.begin(); iter != weapon->m_bullets.end();) {
+			if (iter->m_hit) {
+				++iter;
+				continue;
+			}
+
 			if ((boss_left < iter->m_x) &&
 				(iter->m_x < boss_right) &&
 				(boss_top < iter->m_y) &&
 				(iter->m_y < boss_bottom)) {
 				A.hp -= weapon->m_attack;
 				cumulative_damage += player.m_weapon->m_attack;
-				iter = weapon->m_bullets.erase(iter);
+				iter->hit();
 
 				if (150 >= A.hp) {
 					change_stage();
@@ -1005,13 +1095,18 @@ void bullet_boss_b_collision() {
 	}
 
 	for (auto iter = player.m_weapon->m_bullets.begin(); iter != player.m_weapon->m_bullets.end();) {
+		if (iter->m_hit) {
+			++iter;
+			continue;
+		}
+
 		if ((boss_left < iter->m_x) &&
 			(iter->m_x < boss_right) &&
 			(boss_top < iter->m_y) &&
 			(iter->m_y < boss_bottom)) {
 			B.hp -= player.m_weapon->m_attack;
 			cumulative_damage += player.m_weapon->m_attack;
-			iter = player.m_weapon->m_bullets.erase(iter);
+			iter->hit();
 
 			if (150 >= B.hp) {
 				change_stage();
@@ -1029,13 +1124,18 @@ void bullet_boss_b_collision() {
 
 	for (auto weapon : player.m_old_weapon) {
 		for (auto iter = weapon->m_bullets.begin(); iter != weapon->m_bullets.end();) {
+			if (iter->m_hit) {
+				++iter;
+				continue;
+			}
+
 			if ((boss_left < iter->m_x) &&
 				(iter->m_x < boss_right) &&
 				(boss_top < iter->m_y) &&
 				(iter->m_y < boss_bottom)) {
 				B.hp -= weapon->m_attack;
 				cumulative_damage += player.m_weapon->m_attack;
-				iter = weapon->m_bullets.erase(iter);
+				iter->hit();
 
 				if (150 >= B.hp) {
 					change_stage();
@@ -1060,13 +1160,18 @@ void bullet_boss_c_collision() {
 	float boss_right = C.x + 200.0f;
 
 	for (auto iter = player.m_weapon->m_bullets.begin(); iter != player.m_weapon->m_bullets.end();) {
+		if (iter->m_hit) {
+			++iter;
+			continue;
+		}
+
 		if ((boss_left < iter->m_x) &&
 			(iter->m_x < boss_right) &&
 			(boss_top < iter->m_y) &&
 			(iter->m_y < boss_bottom)) {
 			C.hp -= player.m_weapon->m_attack;
 			cumulative_damage += player.m_weapon->m_attack;
-			iter = player.m_weapon->m_bullets.erase(iter);
+			iter->hit();
 
 			if (150 >= C.hp) {
 				change_stage();
@@ -1084,13 +1189,18 @@ void bullet_boss_c_collision() {
 
 	for (auto weapon : player.m_old_weapon) {
 		for (auto iter = weapon->m_bullets.begin(); iter != weapon->m_bullets.end();) {
+			if (iter->m_hit) {
+				++iter;
+				continue;
+			}
+
 			if ((boss_left < iter->m_x) &&
 				(iter->m_x < boss_right) &&
 				(boss_top < iter->m_y) &&
 				(iter->m_y < boss_bottom)) {
 				C.hp -= weapon->m_attack;
 				cumulative_damage += player.m_weapon->m_attack;
-				iter = weapon->m_bullets.erase(iter);
+				iter->hit();
 
 				if (150 >= C.hp) {
 					change_stage();
@@ -1104,6 +1214,14 @@ void bullet_boss_c_collision() {
 				continue;
 			}
 			++iter;
+		}
+	}
+}
+
+void item_map_collision() {
+	for (auto& item : items) {
+		if (rt.bottom - 30.0f - 50.0f < item.m_y) { 
+			item.m_y = rt.bottom - 30.0f - 50.0f;
 		}
 	}
 }
