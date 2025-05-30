@@ -120,6 +120,7 @@ public:
 		y = 450;
 		direct = 1;
 		hp = 1000;
+		stage6_onoff = 0;
 	}
 	// Ãâ·Â
 	void print_stage6() {

@@ -9,6 +9,7 @@
 //#pragma comment(linker,"/entry:WinMainCRTStartup /subsystem:console")
 
 HWND g_hWnd;
+HWND hWnd2;
 
 Player player;
 std::vector<Item> items;
@@ -92,6 +93,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
 	switch (iMessage) {
 	case WM_CREATE: {
+		hWnd2 = hWnd;
 		hDC = GetDC(hWnd);
 		GetClientRect(hWnd, &rt);
 
@@ -698,6 +700,7 @@ void change_stage() {
 	++stage;
 
 	if (7 == stage) {
+		MessageBox(hWnd2, _T("½Â¸®!"), _T("Á¤º¸"), MB_OK);
 		reset();
 	}
 }
@@ -714,6 +717,20 @@ void reset() {
 	A.reset();
 	B.reset();
 	C.reset();
+
+	KillTimer(hWnd2, A_animation);
+	KillTimer(hWnd2, A_make_attack);
+	KillTimer(hWnd2, A_remove_attack);
+	KillTimer(hWnd2, A_shoot_attack);
+
+	KillTimer(hWnd2, B_animation);
+	KillTimer(hWnd2, B_make_attack);
+	KillTimer(hWnd2, B_remove_attack);
+	KillTimer(hWnd2, B_shoot_attack);
+
+	KillTimer(hWnd2, C_animation);
+	KillTimer(hWnd2, C_Turning_attack);
+	KillTimer(hWnd2, C_Moving);
 }
 
 bool player_platform_collision(const Player& player, const POINT& platform, float old_player_bottom) {

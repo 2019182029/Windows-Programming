@@ -198,6 +198,7 @@ public:
 		hp = 1000;
 		count = 0;
 		attack.clear();
+		stage4_onoff = 0;
 	}
 	// Ãâ·Â
 	void print_stage4() {

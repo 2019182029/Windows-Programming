@@ -94,7 +94,7 @@ Weapon::Weapon(int type) {
 		m_rounds = 0x7FFF'FFFF;
 		m_attack = 5;
 
-		m_range = 1200.0f;
+		m_range = 600.0f;
 		m_cooldown = 150.0f;
 		break;
 
@@ -102,7 +102,7 @@ Weapon::Weapon(int type) {
 		m_rounds = 30;
 		m_attack = 5;
 
-		m_range = 1200.0f;
+		m_range = 600.0f;
 		m_cooldown = 300.0f;
 		break;
 

@@ -131,7 +131,7 @@ void Player::reset() {
 	m_double_jump = true;
 
 	m_is_rolling = false;
-	m_was_rolling = false;
+	m_was_rolling = true; // 이거 true로 해야 방향키 입력한 채 죽어도 정상 조작이 가능합니다. (false면 죽은 후 한쪽 방향으로 쭉 자동 이동)
 
 	Weapon* old_weapon = m_weapon;
 	m_weapon->m_bullets.clear();

@@ -147,6 +147,7 @@ public:
 		y = 200;
 		hp = 1000;
 		attack.clear();
+		stage2_onoff = 0;
 	}
 	// Ãâ·Â
 	void print_stage2() {
