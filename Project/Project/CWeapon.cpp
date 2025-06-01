@@ -79,7 +79,7 @@ void Bullet::print(HDC hDC, HDC bDC) const {
 			bDC, 0, 0, Bmp_Bullet.bmWidth, Bmp_Bullet.bmHeight, RGB(255, 255, 255));
 	} else {
 		SelectObject(DamageDC, Pic_Damage);
-		TransparentBlt(hDC, static_cast<int>(m_x) - 10, static_cast<int>(m_y) - 10, 20, 20,
+		TransparentBlt(hDC, static_cast<int>(m_x) - 10, static_cast<int>(m_y) - 10, 50, 50,
 			DamageDC, 0, 0, Bmp_Damage.bmWidth, Bmp_Damage.bmHeight, RGB(255, 255, 255));
 	}
 }
@@ -108,7 +108,7 @@ Weapon::Weapon(int type) {
 
 	case SHOTGUN:
 		m_rounds = 8;
-		m_attack = 100;
+		m_attack = 10;
 		// 나중에 공격력 10으로 변경 (지금은 테스트 용으로 공격력 높여두기)
 
 		m_range = 300.0f;

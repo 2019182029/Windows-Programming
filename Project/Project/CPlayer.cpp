@@ -19,7 +19,7 @@ Player::Player() {
 	m_was_rolling = false;
 	m_rolled_time = std::chrono::system_clock::now();
 
-	m_weapon = new Weapon(SHOTGUN);
+	m_weapon = new Weapon(PISTOL);
 }
 
 void Player::set_velocity(float x_velocity, float y_velocity) {
@@ -135,7 +135,7 @@ void Player::reset() {
 
 	Weapon* old_weapon = m_weapon;
 	m_weapon->m_bullets.clear();
-	m_weapon = new Weapon(SHOTGUN);
+	m_weapon = new Weapon(PISTOL);
 	delete old_weapon;
 
 	for (auto& weapon : m_old_weapon) {
