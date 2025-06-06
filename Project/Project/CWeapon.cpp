@@ -108,7 +108,7 @@ Weapon::Weapon(int type) {
 
 	case SHOTGUN:
 		m_rounds = 8;
-		m_attack = 10;
+		m_attack = 20;
 		// 나중에 공격력 10으로 변경 (지금은 테스트 용으로 공격력 높여두기)
 
 		m_range = 300.0f;
@@ -116,7 +116,7 @@ Weapon::Weapon(int type) {
 		break;
 
 	case SNIPER:
-		m_rounds = 3;
+		m_rounds = 5;
 		m_attack = 50;
 
 		m_range = 1200.0f;
