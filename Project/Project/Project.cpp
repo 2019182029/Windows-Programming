@@ -110,19 +110,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
 		// MapDc에 대한 비트맵 생성
 		MapDC = CreateCompatibleDC(hDC);
-		Pic_BossMap = (HBITMAP)LoadImage(g_hinst, _T("boss stage.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_RelaxMap = (HBITMAP)LoadImage(g_hinst, _T("relax stage.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_TutorialMap = (HBITMAP)LoadImage(g_hinst, _T("tutorial stage.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_BossMap = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss stage.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_RelaxMap = (HBITMAP)LoadImage(g_hinst, _T("Resource/relax stage.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_TutorialMap = (HBITMAP)LoadImage(g_hinst, _T("Resource/tutorial stage.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_BossMap = (HBITMAP)SelectObject(MapDC, Pic_BossMap);
 
 		// PlayerDC에 대한 비트맵 생성 및 설정
 		PlayerDC = CreateCompatibleDC(hDC);
-		Pic_Player[IDLE] = (HBITMAP)LoadImage(g_hinst, _T("player.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Player[UP] = (HBITMAP)LoadImage(g_hinst, _T("player_up.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Player[DOWN] = (HBITMAP)LoadImage(g_hinst, _T("player_down.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Player[LEFT] = (HBITMAP)LoadImage(g_hinst, _T("player_left.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Player[RIGHT] = (HBITMAP)LoadImage(g_hinst, _T("player_right.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Player[DODGE] = (HBITMAP)LoadImage(g_hinst, _T("player_dodge.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Player[IDLE] = (HBITMAP)LoadImage(g_hinst, _T("Resource/player.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Player[UP] = (HBITMAP)LoadImage(g_hinst, _T("Resource/player_up.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Player[DOWN] = (HBITMAP)LoadImage(g_hinst, _T("Resource/player_down.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Player[LEFT] = (HBITMAP)LoadImage(g_hinst, _T("Resource/player_left.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Player[RIGHT] = (HBITMAP)LoadImage(g_hinst, _T("Resource/player_right.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Player[DODGE] = (HBITMAP)LoadImage(g_hinst, _T("Resource/player_dodge.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Player = (HBITMAP)SelectObject(PlayerDC, Pic_Player[player.m_anim_state]);
 		for (int i = 0; i < 6; ++i) {
 			GetObject(Pic_Player[i], sizeof(BITMAP), &Bmp_Player[i]);
@@ -130,16 +130,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
 		// PlatformDC에 대한 비트맵 생성 및 설정
 		PlatformDC = CreateCompatibleDC(hDC);
-		Pic_Platform = (HBITMAP)LoadImage(g_hinst, _T("platform.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Platform = (HBITMAP)LoadImage(g_hinst, _T("Resource/platform.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Platform = (HBITMAP)SelectObject(PlatformDC, Pic_Platform);
 		GetObject(Pic_Platform, sizeof(BITMAP), &Bmp_Platform);
 
 		// WeaponDC에 대한 비트맵 생성 및 설정
 		WeaponDC = CreateCompatibleDC(hDC);
-		Pic_Weapon[PISTOL] = (HBITMAP)LoadImage(g_hinst, _T("pistol.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Weapon[SMG] = (HBITMAP)LoadImage(g_hinst, _T("smg.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Weapon[SHOTGUN] = (HBITMAP)LoadImage(g_hinst, _T("shotgun.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Weapon[SNIPER] = (HBITMAP)LoadImage(g_hinst, _T("sniper.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Weapon[PISTOL] = (HBITMAP)LoadImage(g_hinst, _T("Resource/pistol.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Weapon[SMG] = (HBITMAP)LoadImage(g_hinst, _T("Resource/smg.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Weapon[SHOTGUN] = (HBITMAP)LoadImage(g_hinst, _T("Resource/shotgun.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Weapon[SNIPER] = (HBITMAP)LoadImage(g_hinst, _T("Resource/sniper.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		for (int i = 0; i < 4; ++i) {
 			GetObject(Pic_Weapon[i], sizeof(BITMAP), &Bmp_Weapon[i]);
 		}
@@ -147,63 +147,63 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
 		// BulletDC에 대한 비트맵 생성 및 설정
 		BulletDC = CreateCompatibleDC(hDC);
-		Pic_Bullet = (HBITMAP)LoadImage(g_hinst, _T("bullet.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Bullet = (HBITMAP)LoadImage(g_hinst, _T("Resource/bullet.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Bullet = (HBITMAP)SelectObject(BulletDC, Pic_Bullet);
 		GetObject(Pic_Bullet, sizeof(BITMAP), &Bmp_Bullet);
 
 		DamageDC = CreateCompatibleDC(hDC);
-		Pic_Damage = (HBITMAP)LoadImage(g_hinst, _T("Damage Effect.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Damage = (HBITMAP)LoadImage(g_hinst, _T("Resource/Damage Effect.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Damage = (HBITMAP)SelectObject(DamageDC, Pic_Damage);
 		GetObject(Pic_Damage, sizeof(BITMAP), &Bmp_Damage);
 
 		// PortalDC에 대한 비트맵 생성 및 설정
 		PortalDC = CreateCompatibleDC(hDC);
-		Pic_Portal = (HBITMAP)LoadImage(g_hinst, _T("portal.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Portal = (HBITMAP)LoadImage(g_hinst, _T("Resource/portal.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Portal = (HBITMAP)SelectObject(PortalDC, Pic_Portal);
 		GetObject(Pic_Portal, sizeof(BITMAP), &Bmp_Portal);
 
 		// HealDC에 대한 비트맵 생성 및 설정
 		HealDC = CreateCompatibleDC(hDC);
-		Pic_Heal = (HBITMAP)LoadImage(g_hinst, _T("healing_item.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Heal = (HBITMAP)LoadImage(g_hinst, _T("Resource/healing_item.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Heal = (HBITMAP)SelectObject(HealDC, Pic_Heal);
 		GetObject(Pic_Heal, sizeof(BITMAP), &Bmp_Heal);
 
 		// Boss_A_DC에 대한 비트맵 생성 및 설정
 		Boss_A_DC = CreateCompatibleDC(hDC);
-		Pic_Boss_A[0] = (HBITMAP)LoadImage(g_hinst, _T("boss A1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_A[1] = (HBITMAP)LoadImage(g_hinst, _T("boss A2.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_A[2] = (HBITMAP)LoadImage(g_hinst, _T("boss A3.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_A[3] = (HBITMAP)LoadImage(g_hinst, _T("boss A4.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_A[4] = (HBITMAP)LoadImage(g_hinst, _T("boss A5.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_A[5] = (HBITMAP)LoadImage(g_hinst, _T("boss A6.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_A[6] = (HBITMAP)LoadImage(g_hinst, _T("boss A7.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[0] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss A1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[1] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss A2.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[2] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss A3.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[3] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss A4.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[4] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss A5.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[5] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss A6.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_A[6] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss A7.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Boss_A = (HBITMAP)SelectObject(Boss_A_DC, Pic_Boss_A);
 
 		// Boss_B_DC에 대한 비트맵 생성 및 설정
 		Boss_B_DC = CreateCompatibleDC(hDC);
-		Pic_Boss_B_row[0] = (HBITMAP)LoadImage(g_hinst, _T("boss B_row1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_row[1] = (HBITMAP)LoadImage(g_hinst, _T("boss B_row2.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_row[2] = (HBITMAP)LoadImage(g_hinst, _T("boss B_row3.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_row[3] = (HBITMAP)LoadImage(g_hinst, _T("boss B_row4.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_row[4] = (HBITMAP)LoadImage(g_hinst, _T("boss B_row5.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_row[5] = (HBITMAP)LoadImage(g_hinst, _T("boss B_row6.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_row[6] = (HBITMAP)LoadImage(g_hinst, _T("boss B_row7.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_col[0] = (HBITMAP)LoadImage(g_hinst, _T("boss B_col1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_col[1] = (HBITMAP)LoadImage(g_hinst, _T("boss B_col2.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_col[2] = (HBITMAP)LoadImage(g_hinst, _T("boss B_col3.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_col[3] = (HBITMAP)LoadImage(g_hinst, _T("boss B_col4.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_col[4] = (HBITMAP)LoadImage(g_hinst, _T("boss B_col5.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_col[5] = (HBITMAP)LoadImage(g_hinst, _T("boss B_col6.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_B_col[6] = (HBITMAP)LoadImage(g_hinst, _T("boss B_col7.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_row[0] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_row1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_row[1] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_row2.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_row[2] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_row3.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_row[3] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_row4.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_row[4] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_row5.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_row[5] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_row6.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_row[6] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_row7.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_col[0] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_col1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_col[1] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_col2.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_col[2] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_col3.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_col[3] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_col4.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_col[4] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_col5.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_col[5] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_col6.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_B_col[6] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss B_col7.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Boss_B = (HBITMAP)SelectObject(Boss_B_DC, Pic_Boss_B_row[0]);
 
 		// Boss_C_DC에 대한 비트맵 생성 및 설정
 		Boss_C_DC = CreateCompatibleDC(hDC);
-		Pic_Boss_C[0] = (HBITMAP)LoadImage(g_hinst, _T("boss C1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_C[1] = (HBITMAP)LoadImage(g_hinst, _T("boss C2.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_C[2] = (HBITMAP)LoadImage(g_hinst, _T("boss C3.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_C[3] = (HBITMAP)LoadImage(g_hinst, _T("boss C4.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
-		Pic_Boss_C[4] = (HBITMAP)LoadImage(g_hinst, _T("boss C5.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_C[0] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss C1.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_C[1] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss C2.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_C[2] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss C3.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_C[3] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss C4.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
+		Pic_Boss_C[4] = (HBITMAP)LoadImage(g_hinst, _T("Resource/boss C5.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
 		old_Pic_Boss_C = (HBITMAP)SelectObject(Boss_C_DC, Pic_Boss_C);
 		ReleaseDC(hWnd, hDC);
 		break;

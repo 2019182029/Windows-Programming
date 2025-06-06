@@ -36,7 +36,7 @@ void Player::set_on_ground(const float y_ground) {
 }
 
 void Player::set_on_platform(const POINT& platform) {
-	m_y = platform.y - Bmp_Player[m_anim_state].bmHeight;
+	m_y = platform.y - static_cast<float>(Bmp_Player[m_anim_state].bmHeight);
 	m_y_velocity = 0.0f;
 
 	m_on_platform = true;
@@ -104,8 +104,8 @@ void Player::fire() {
 
 	if (m_weapon) {
 		m_weapon->fire(
-			m_x + (Bmp_Player[m_anim_state].bmWidth / 2) - 5,
-			m_y + (Bmp_Player[m_anim_state].bmHeight / 2) - 7,
+			static_cast<int>(m_x) + (Bmp_Player[m_anim_state].bmWidth / 2) - 5,
+			static_cast<int>(m_y) + (Bmp_Player[m_anim_state].bmHeight / 2) - 7,
 			m_anim_state);
 
 		if (0 == m_weapon->m_rounds) {
